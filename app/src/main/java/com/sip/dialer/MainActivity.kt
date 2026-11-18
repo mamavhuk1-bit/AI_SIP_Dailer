@@ -13,7 +13,11 @@ import android.graphics.Typeface
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.Ringtone
+import android.content.ContentValues
+import android.media.AudioManager
 import android.media.RingtoneManager
+import android.media.ToneGenerator
+import android.provider.MediaStore
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -398,7 +402,7 @@ class MainActivity : AppCompatActivity() {
                         stopCallTimer()
                         enableProximitySensor(false)
                         if (isRecording) {
-                            try { call.stopRecording() } catch (_: Exception) {}
+                            try { call.stopRecording(); exportRecordingToPublicMusic(currentRecordFilePath) } catch (_: Exception) {}
                             isRecording = false
                             btnRecord.text = "⏺\nRecord"
                             btnRecord.setBackgroundResource(R.drawable.bg_ai_pill)
@@ -1434,7 +1438,7 @@ class MainActivity : AppCompatActivity() {
                 layoutParams = GridLayout.LayoutParams().apply { width = 130; height = 90; setMargins(6, 5, 6, 5) }
                 setOnClickListener {
                     it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                    currentCall?.sendDtmf(k[0])
+                    sendReliableDtmf(k[0])
                     tvDtmfEntered.append(k)
                 }
             })
@@ -1488,13 +1492,69 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getRecordingsDirectory(): File {
-        val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "SIP_Recordings")
-        if (!dir.exists() && !dir.mkdirs()) {
-            val fb = File(getExternalFilesDir(null), "Recordings")
-            if (!fb.exists()) fb.mkdirs()
-            return fb
+    private fun sendReliableDtmf(digit: Char) {
+        try {
+            currentCall?.sendDtmf(digit)
+            val toneType = when (digit) {
+                '0' -> ToneGenerator.TONE_DTMF_0
+                '1' -> ToneGenerator.TONE_DTMF_1
+                '2' -> ToneGenerator.TONE_DTMF_2
+                '3' -> ToneGenerator.TONE_DTMF_3
+                '4' -> ToneGenerator.TONE_DTMF_4
+                '5' -> ToneGenerator.TONE_DTMF_5
+                '6' -> ToneGenerator.TONE_DTMF_6
+                '7' -> ToneGenerator.TONE_DTMF_7
+                '8' -> ToneGenerator.TONE_DTMF_8
+                '9' -> ToneGenerator.TONE_DTMF_9
+                '*' -> ToneGenerator.TONE_DTMF_S
+                '#' -> ToneGenerator.TONE_DTMF_P
+                else -> -1
+            }
+            if (toneType != -1) {
+                val tg = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 85)
+                tg.startTone(toneType, 180)
+                mainHandler.postDelayed({ try { tg.release() } catch (_: Exception) {} }, 250)
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun exportRecordingToPublicMusic(tempPath: String?) {
+        if (tempPath.isNullOrEmpty()) return
+        val srcFile = File(tempPath)
+        if (!srcFile.exists() || srcFile.length() <= 44) return
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values = ContentValues().apply {
+                    put(MediaStore.Audio.Media.DISPLAY_NAME, srcFile.name)
+                    put(MediaStore.Audio.Media.MIME_TYPE, "audio/wav")
+                    put(MediaStore.Audio.Media.RELATIVE_PATH, Environment.DIRECTORY_MUSIC + "/SIP_Recordings")
+                    put(MediaStore.Audio.Media.IS_PENDING, 1)
+                }
+                val uri = contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, values)
+                if (uri != null) {
+                    contentResolver.openOutputStream(uri)?.use { out ->
+                        srcFile.inputStream().use { inp -> inp.copyTo(out) }
+                    }
+                    values.clear()
+                    values.put(MediaStore.Audio.Media.IS_PENDING, 0)
+                    contentResolver.update(uri, values, null, null)
+                    lastSavedRecordFileName = srcFile.name
+                }
+            } else {
+                val pubDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC), "SIP_Recordings")
+                if (!pubDir.exists()) pubDir.mkdirs()
+                val dest = File(pubDir, srcFile.name)
+                srcFile.copyTo(dest, overwrite = true)
+                lastSavedRecordFileName = dest.name
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
+    }
+
+    private fun getRecordingsDirectory(): File {
+        val dir = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), "SIP_Recordings")
+        if (!dir.exists()) dir.mkdirs()
         return dir
     }
 
@@ -1565,6 +1625,7 @@ class MainActivity : AppCompatActivity() {
                 setOnClickListener {
                     it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                     etDialNumber.append(digit)
+                    if (currentCall != null) sendReliableDtmf(digit[0])
                 }
             }
         }
@@ -1586,6 +1647,8 @@ class MainActivity : AppCompatActivity() {
         val factory = Factory.instance()
         factory.setDebugMode(false, "AISipDialer")
         core = factory.createCore(null, null, this)
+        core.useRfc2833ForDtmf = true
+        core.useInfoForDtmf = true
         core.addListener(coreListener)
         core.start()
     }
@@ -1686,7 +1749,7 @@ class MainActivity : AppCompatActivity() {
                     lastSavedRecordFileName = File(currentRecordFilePath ?: "").name
                 } catch (_: Exception) {}
             } else {
-                try { call.stopRecording() } catch (_: Exception) {}
+                try { call.stopRecording(); exportRecordingToPublicMusic(currentRecordFilePath) } catch (_: Exception) {}
                 isRecording = false; btnRecord.text = "⏺\nRecord"; btnRecord.setBackgroundResource(R.drawable.bg_ai_pill)
             }
         }

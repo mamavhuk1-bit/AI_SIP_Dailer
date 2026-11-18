@@ -1,24 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_ai_cyber">
+    android:background="@drawable/bg_theme_luminous">
 
-    <!-- TOP AI TELEMETRY HUD (Always Visible) -->
+    <!-- TOP AI TELEMETRY HUD -->
     <LinearLayout
         android:id="@+id/topTelemetryCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="12dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="8dp"
         android:background="@drawable/bg_ai_card"
         android:orientation="vertical"
-        android:padding="11dp">
+        android:padding="10dp">
 
-        <!-- Multi-SIP Simultaneous Status & Ping Strip -->
+        <!-- Row 1: Live Clock with Seconds & Date + Waving BD Flag -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvLiveClockDate"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🕒 12:00:00 AM • 19 Nov 2026"
+                android:textColor="#FDE047"
+                android:textSize="11.5sp"
+                android:textStyle="bold" />
+
+            <com.sip.dialer.WavingBdFlagView
+                android:id="@+id/wavingBdFlag"
+                android:layout_width="40dp"
+                android:layout_height="26dp"
+                android:layout_marginStart="6dp" />
+        </LinearLayout>
+
+        <!-- Row 2: Multi-SIP Simultaneous Status & Ping Strip -->
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
             android:scrollbars="none">
 
             <LinearLayout
@@ -26,24 +52,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tvNoAccountHint"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="● No SIP Account Active (Open Settings)"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:orientation="horizontal" />
         </HorizontalScrollView>
 
-        <!-- Network Type + Public IP + Version -->
+        <!-- Row 3: Network Type + Public IP + Refresh Button -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="5dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -52,58 +68,49 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_ai_pill"
-                android:paddingHorizontal="9dp"
+                android:paddingHorizontal="8dp"
                 android:paddingVertical="2dp"
                 android:text="📡 Checking..."
                 android:textColor="#FFFFFF"
-                android:textSize="11sp"
+                android:textSize="10.5sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvPublicIp"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="🌐 IP: Detecting..."
                 android:textColor="#F0F9FF"
-                android:textSize="11sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:text="v1.4"
-                android:textColor="#BAE6FD"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:textSize="10.5sp" />
 
             <TextView
                 android:id="@+id/btnRefreshNet"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="4dp"
+                android:paddingHorizontal="6dp"
                 android:text="🔄"
-                android:textSize="13sp" />
+                android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- ISP Name -->
+        <!-- Row 4: ISP Name -->
         <TextView
             android:id="@+id/tvIspName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
+            android:layout_marginTop="2dp"
             android:ellipsize="end"
             android:maxLines="1"
             android:text="ISP: Detecting..."
             android:textColor="#BAE6FD"
-            android:textSize="11sp"
+            android:textSize="10.5sp"
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- CONTENT CONTAINER ABOVE BOTTOM NAV -->
+    <!-- CONTENT CONTAINER -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -112,7 +119,7 @@
         android:paddingHorizontal="12dp"
         android:paddingVertical="6dp">
 
-        <!-- 1. KEYPAD TAB VIEW -->
+        <!-- 1. KEYPAD TAB -->
         <ScrollView
             android:id="@+id/tabKeypadView"
             android:layout_width="match_parent"
@@ -129,7 +136,7 @@
                     android:id="@+id/etDialNumber"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginVertical="4dp"
+                    android:layout_marginVertical="2dp"
                     android:background="@android:color/transparent"
                     android:gravity="center"
                     android:hint="Enter Number"
@@ -137,7 +144,7 @@
                     android:maxLines="1"
                     android:textColor="#FFFFFF"
                     android:textColorHint="#99FFFFFF"
-                    android:textSize="32sp"
+                    android:textSize="30sp"
                     android:textStyle="bold" />
 
                 <GridLayout
@@ -148,35 +155,35 @@
                     android:columnCount="3"
                     android:rowCount="4">
 
-                    <Button android:id="@+id/btn1" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="1" android:textColor="#FFFFFF" android:textSize="22sp" />
-                    <Button android:id="@+id/btn2" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="2\nABC" android:textColor="#FFFFFF" android:textSize="18sp" />
-                    <Button android:id="@+id/btn3" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="3\nDEF" android:textColor="#FFFFFF" android:textSize="18sp" />
+                    <Button android:id="@+id/btn1" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="1" android:textColor="#FFFFFF" android:textSize="22sp" />
+                    <Button android:id="@+id/btn2" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="2\nABC" android:textColor="#FFFFFF" android:textSize="18sp" />
+                    <Button android:id="@+id/btn3" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="3\nDEF" android:textColor="#FFFFFF" android:textSize="18sp" />
 
-                    <Button android:id="@+id/btn4" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="4\nGHI" android:textColor="#FFFFFF" android:textSize="18sp" />
-                    <Button android:id="@+id/btn5" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="5\nJKL" android:textColor="#FFFFFF" android:textSize="18sp" />
-                    <Button android:id="@+id/btn6" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="6\nMNO" android:textColor="#FFFFFF" android:textSize="18sp" />
+                    <Button android:id="@+id/btn4" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="4\nGHI" android:textColor="#FFFFFF" android:textSize="18sp" />
+                    <Button android:id="@+id/btn5" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="5\nJKL" android:textColor="#FFFFFF" android:textSize="18sp" />
+                    <Button android:id="@+id/btn6" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="6\nMNO" android:textColor="#FFFFFF" android:textSize="18sp" />
 
-                    <Button android:id="@+id/btn7" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="7\nPQRS" android:textColor="#FFFFFF" android:textSize="18sp" />
-                    <Button android:id="@+id/btn8" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="8\nTUV" android:textColor="#FFFFFF" android:textSize="18sp" />
-                    <Button android:id="@+id/btn9" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="9\nWXYZ" android:textColor="#FFFFFF" android:textSize="18sp" />
+                    <Button android:id="@+id/btn7" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="7\nPQRS" android:textColor="#FFFFFF" android:textSize="18sp" />
+                    <Button android:id="@+id/btn8" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="8\nTUV" android:textColor="#FFFFFF" android:textSize="18sp" />
+                    <Button android:id="@+id/btn9" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="9\nWXYZ" android:textColor="#FFFFFF" android:textSize="18sp" />
 
-                    <Button android:id="@+id/btnStar" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:text="*" android:textColor="#FFFFFF" android:textSize="26sp" />
-                    <Button android:id="@+id/btn0" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="0\n+" android:textColor="#FFFFFF" android:textSize="20sp" />
-                    <Button android:id="@+id/btnHash" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:text="#" android:textColor="#FFFFFF" android:textSize="24sp" />
+                    <Button android:id="@+id/btnStar" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:text="*" android:textColor="#FFFFFF" android:textSize="26sp" />
+                    <Button android:id="@+id/btn0" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="0\n+" android:textColor="#FFFFFF" android:textSize="20sp" />
+                    <Button android:id="@+id/btnHash" android:layout_width="70dp" android:layout_height="70dp" android:layout_margin="6dp" android:background="@drawable/bg_dial_btn" android:text="#" android:textColor="#FFFFFF" android:textSize="24sp" />
                 </GridLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="6dp"
                     android:gravity="center"
                     android:orientation="horizontal">
 
                     <Button
                         android:id="@+id/btnRecordingsList"
-                        android:layout_width="84dp"
-                        android:layout_height="44dp"
-                        android:layout_marginEnd="22dp"
+                        android:layout_width="82dp"
+                        android:layout_height="42dp"
+                        android:layout_marginEnd="20dp"
                         android:background="@drawable/bg_ai_pill"
                         android:text="🎧 Recs"
                         android:textAllCaps="false"
@@ -185,8 +192,8 @@
 
                     <Button
                         android:id="@+id/btnMakeCall"
-                        android:layout_width="74dp"
-                        android:layout_height="74dp"
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
                         android:background="@drawable/bg_call_btn"
                         android:text="📞"
                         android:textColor="#FFFFFF"
@@ -194,9 +201,9 @@
 
                     <Button
                         android:id="@+id/btnBackspace"
-                        android:layout_width="84dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="22dp"
+                        android:layout_width="82dp"
+                        android:layout_height="42dp"
+                        android:layout_marginStart="20dp"
                         android:background="@drawable/bg_ai_pill"
                         android:text="⌫"
                         android:textColor="#FFFFFF"
@@ -205,7 +212,7 @@
             </LinearLayout>
         </ScrollView>
 
-        <!-- 2. DEDICATED ACTIVE IN-CALL SCREEN (Replaces Dialpad During Call) -->
+        <!-- 2. DEDICATED IN-CALL SCREEN (Google Dialer Style Red End Call Pill) -->
         <LinearLayout
             android:id="@+id/layoutActiveCallScreen"
             android:layout_width="match_parent"
@@ -213,7 +220,7 @@
             android:background="@drawable/bg_ai_card"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="16dp"
+            android:padding="14dp"
             android:visibility="gone">
 
             <TextView
@@ -223,26 +230,25 @@
                 android:background="@drawable/bg_ai_pill"
                 android:paddingHorizontal="14dp"
                 android:paddingVertical="4dp"
-                android:text="📡 Via: Primary SIP"
+                android:text="📡 Line: Primary SIP"
                 android:textColor="#7DD3FC"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/tvInCallAvatar"
-                android:layout_width="76dp"
-                android:layout_height="76dp"
-                android:layout_marginTop="12dp"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_marginTop="10dp"
                 android:background="@drawable/bg_dial_btn"
                 android:gravity="center"
                 android:text="👤"
-                android:textSize="34sp" />
+                android:textSize="32sp" />
 
             <TextView
                 android:id="@+id/tvInCallName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="8dp"
                 android:text="Caller Name"
                 android:textColor="#FFFFFF"
                 android:textSize="22sp"
@@ -255,30 +261,29 @@
                 android:layout_marginTop="2dp"
                 android:text="017XXXXXXXX"
                 android:textColor="#E0F2FE"
-                android:textSize="15sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/tvInCallStatusTimer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:background="@drawable/bg_ai_pill"
                 android:paddingHorizontal="16dp"
-                android:paddingVertical="5dp"
+                android:paddingVertical="4dp"
                 android:text="⏱ 00:00"
                 android:textColor="#FDE047"
-                android:textSize="18sp"
+                android:textSize="17sp"
                 android:textStyle="bold" />
 
-            <!-- Collapsible In-Call DTMF Keypad -->
             <LinearLayout
                 android:id="@+id/layoutInCallDtmf"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:background="#330F172A"
                 android:orientation="vertical"
-                android:padding="8dp"
+                android:padding="6dp"
                 android:visibility="gone">
 
                 <TextView
@@ -288,7 +293,7 @@
                     android:gravity="center"
                     android:text="DTMF: "
                     android:textColor="#7DD3FC"
-                    android:textSize="13sp" />
+                    android:textSize="12sp" />
 
                 <GridLayout
                     android:id="@+id/gridInCallDtmf"
@@ -297,100 +302,36 @@
                     android:columnCount="3" />
             </LinearLayout>
 
-            <!-- 2x3 Pro In-Call Control Grid -->
             <GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="10dp"
                 android:columnCount="3"
                 android:rowCount="2">
 
-                <Button
-                    android:id="@+id/btnMute"
-                    android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_columnWeight="1"
-                    android:layout_margin="5dp"
-                    android:background="@drawable/bg_ai_pill"
-                    android:text="🔇\nMute"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp" />
-
-                <Button
-                    android:id="@+id/btnHold"
-                    android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_columnWeight="1"
-                    android:layout_margin="5dp"
-                    android:background="@drawable/bg_ai_pill"
-                    android:text="⏸️\nHold"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp" />
-
-                <Button
-                    android:id="@+id/btnSpeaker"
-                    android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_columnWeight="1"
-                    android:layout_margin="5dp"
-                    android:background="@drawable/bg_ai_pill"
-                    android:text="🔊\nSpeaker"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp" />
-
-                <Button
-                    android:id="@+id/btnRecord"
-                    android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_columnWeight="1"
-                    android:layout_margin="5dp"
-                    android:background="@drawable/bg_ai_pill"
-                    android:text="⏺\nRecord"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp" />
-
-                <Button
-                    android:id="@+id/btnToggleInCallDtmf"
-                    android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_columnWeight="1"
-                    android:layout_margin="5dp"
-                    android:background="@drawable/bg_ai_pill"
-                    android:text="🔢\nDTMF"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp" />
-
-                <Button
-                    android:id="@+id/btnInCallAddNote"
-                    android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_columnWeight="1"
-                    android:layout_margin="5dp"
-                    android:background="@drawable/bg_ai_pill"
-                    android:text="📊\nStats"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp" />
+                <Button android:id="@+id/btnMute" android:layout_width="0dp" android:layout_height="50dp" android:layout_columnWeight="1" android:layout_margin="4dp" android:background="@drawable/bg_ai_pill" android:text="🔇\nMute" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
+                <Button android:id="@+id/btnHold" android:layout_width="0dp" android:layout_height="50dp" android:layout_columnWeight="1" android:layout_margin="4dp" android:background="@drawable/bg_ai_pill" android:text="⏸️\nHold" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
+                <Button android:id="@+id/btnSpeaker" android:layout_width="0dp" android:layout_height="50dp" android:layout_columnWeight="1" android:layout_margin="4dp" android:background="@drawable/bg_ai_pill" android:text="🔊\nSpeaker" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
+                <Button android:id="@+id/btnRecord" android:layout_width="0dp" android:layout_height="50dp" android:layout_columnWeight="1" android:layout_margin="4dp" android:background="@drawable/bg_ai_pill" android:text="⏺\nRecord" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
+                <Button android:id="@+id/btnToggleInCallDtmf" android:layout_width="0dp" android:layout_height="50dp" android:layout_columnWeight="1" android:layout_margin="4dp" android:background="@drawable/bg_ai_pill" android:text="🔢\nDTMF" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
+                <Button android:id="@+id/btnInCallAddNote" android:layout_width="0dp" android:layout_height="50dp" android:layout_columnWeight="1" android:layout_margin="4dp" android:background="@drawable/bg_ai_pill" android:text="📊\nPing/MOS" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
             </GridLayout>
 
-            <!-- Large Red End Call Button -->
+            <!-- Google Dialer Style Red Pill End Call Button -->
             <Button
                 android:id="@+id/btnEndCall"
-                android:layout_width="74dp"
-                android:layout_height="74dp"
-                android:layout_marginTop="14dp"
+                android:layout_width="175dp"
+                android:layout_height="56dp"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/bg_end_call_btn"
-                android:text="📵"
+                android:text="📵  End Call"
+                android:textAllCaps="false"
                 android:textColor="#FFFFFF"
-                android:textSize="28sp" />
+                android:textSize="16sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- 3. MODERN CHART & TABLE RECENTS TAB VIEW -->
+        <!-- 3. CALL ANALYTICS & HISTORY TABLE TAB -->
         <LinearLayout
             android:id="@+id/tabRecentsView"
             android:layout_width="match_parent"
@@ -410,9 +351,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="📊 Call Analytics &amp; Log"
+                    android:text="📊 Call History (Tap for Details)"
                     android:textColor="#FFFFFF"
-                    android:textSize="16sp"
+                    android:textSize="15sp"
                     android:textStyle="bold" />
 
                 <Button
@@ -426,34 +367,16 @@
                     android:textSize="11sp" />
             </LinearLayout>
 
-            <!-- Visual Proportional Bar Chart -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="12dp"
+                android:layout_height="10dp"
                 android:layout_marginTop="8dp"
                 android:background="#330F172A"
                 android:orientation="horizontal">
 
-                <View
-                    android:id="@+id/barMissed"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="#F87171" />
-
-                <View
-                    android:id="@+id/barDialed"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="#38BDF8" />
-
-                <View
-                    android:id="@+id/barReceived"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="#34D399" />
+                <View android:id="@+id/barMissed" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="#F87171" />
+                <View android:id="@+id/barDialed" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="#38BDF8" />
+                <View android:id="@+id/barReceived" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="#34D399" />
             </LinearLayout>
 
             <TextView
@@ -467,11 +390,10 @@
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
-            <!-- Filter Tabs -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="38dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="36dp"
+                android:layout_marginTop="6dp"
                 android:orientation="horizontal">
 
                 <Button android:id="@+id/tabFilterAll" android:layout_width="0dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:layout_weight="1" android:backgroundTint="#38BDF8" android:text="All" android:textAllCaps="false" android:textColor="#0F172A" android:textSize="11sp" />
@@ -480,15 +402,14 @@
                 <Button android:id="@+id/tabFilterReceived" android:layout_width="0dp" android:layout_height="match_parent" android:layout_marginStart="3dp" android:layout_weight="1" android:backgroundTint="#1E293B" android:text="Received" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
             </LinearLayout>
 
-            <!-- Table Header -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:background="#440F172A"
                 android:orientation="horizontal"
                 android:paddingHorizontal="8dp"
-                android:paddingVertical="7dp">
+                android:paddingVertical="6dp">
 
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.85" android:text="Type" android:textColor="#7DD3FC" android:textSize="11sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.6" android:text="Caller / Line" android:textColor="#7DD3FC" android:textSize="11sp" android:textStyle="bold" />
@@ -508,7 +429,7 @@
             </ScrollView>
         </LinearLayout>
 
-        <!-- 4. IN-APP CONTACTS TAB VIEW (No External App Needed) -->
+        <!-- 4. IN-APP CONTACTS TAB -->
         <LinearLayout
             android:id="@+id/tabContactsView"
             android:layout_width="match_parent"
@@ -521,9 +442,9 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="📇 In-App Phonebook"
+                android:text="📇 In-App Phonebook (Auto 11-Digit Format)"
                 android:textColor="#FFFFFF"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:textStyle="bold" />
 
             <EditText
@@ -551,200 +472,286 @@
             </ScrollView>
         </LinearLayout>
 
-        <!-- 5. SETTINGS & MULTI-ACCOUNT TAB VIEW -->
-        <ScrollView
+        <!-- 5. STRUCTURED SETTINGS TAB -->
+        <FrameLayout
             android:id="@+id/tabSettingsView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone">
 
-            <LinearLayout
+            <!-- 5A. SETTINGS HUB -->
+            <ScrollView
+                android:id="@+id/settingsMenuHub"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingBottom="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:text="⚙️ Settings &amp; Customization"
+                        android:textColor="#FFFFFF"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:id="@+id/menuCallingAccount"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_ai_card"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="15dp">
+
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📞" android:textSize="22sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Calling Account" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
+                            <TextView android:id="@+id/tvCallingAccountSub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Ask Every Time or Default SIP" android:textColor="#BAE6FD" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/menuSipAccount"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="9dp"
+                        android:background="@drawable/bg_ai_card"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="15dp">
+
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📡" android:textSize="22sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SIP Account &amp; Ringtones" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Add, Edit, Delete &amp; Custom Ringtone per SIP" android:textColor="#BAE6FD" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="9dp"
+                        android:background="@drawable/bg_ai_card"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="15dp">
+
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⏺️" android:textSize="22sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Auto Call Recording" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Automatically record every call (.wav)" android:textColor="#BAE6FD" android:textSize="12sp" />
+                        </LinearLayout>
+                        <Switch android:id="@+id/switchAutoRecord" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/menuUiThemes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="9dp"
+                        android:background="@drawable/bg_ai_card"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="15dp">
+
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎨" android:textSize="22sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App UI &amp; Themes (5 Styles)" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
+                            <TextView android:id="@+id/tvCurrentThemeSub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Luminous Cyber-Glass" android:textColor="#BAE6FD" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/menuBackupRestore"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="9dp"
+                        android:background="@drawable/bg_ai_card"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="15dp">
+
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💾" android:textSize="22sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Backup &amp; Restore (Export / Import)" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Save or restore SIP accounts &amp; call history" android:textColor="#BAE6FD" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/menuAbout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="9dp"
+                        android:background="@drawable/bg_ai_card"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="15dp">
+
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ℹ️" android:textSize="22sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="About" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App v1.5 • Credits &amp; Developer Info" android:textColor="#BAE6FD" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </ScrollView>
+
+            <!-- 5B. CALLING ACCOUNT SUB-SCREEN -->
+            <LinearLayout
+                android:id="@+id/subCallingAccount"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_ai_card"
                 android:orientation="vertical"
-                android:paddingBottom="16dp">
+                android:padding="14dp"
+                android:visibility="gone">
 
-                <!-- Outgoing Call SIP Preference Card -->
+                <Button android:id="@+id/btnBackFromCalling" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back to Settings" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="📞 Select Calling Account Mode" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" />
+                <RadioGroup android:id="@+id/rgCallingAccount" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" />
+            </LinearLayout>
+
+            <!-- 5C. SIP ACCOUNT SUB-SCREEN -->
+            <ScrollView
+                android:id="@+id/subSipAccount"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_ai_card"
                     android:orientation="vertical"
-                    android:padding="12dp">
+                    android:paddingBottom="14dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📞 Outgoing Call SIP Mode"
-                        android:textColor="#FFFFFF"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <Spinner
-                        android:id="@+id/spinnerDefaultCallAccount"
-                        android:layout_width="match_parent"
-                        android:layout_height="40dp"
-                        android:layout_marginTop="6dp"
-                        android:backgroundTint="#FFFFFF" />
-                </LinearLayout>
-
-                <!-- Active SIP Accounts List (Edit / Rename / Delete) -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:background="@drawable/bg_ai_card"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📡 Simultaneous Active SIP Accounts"
-                        android:textColor="#FFFFFF"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:id="@+id/layoutSavedAccountsContainer"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:orientation="vertical" />
-                </LinearLayout>
-
-                <!-- Add / Edit SIP Account Form -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:background="@drawable/bg_ai_card"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <TextView
-                        android:id="@+id/tvFormTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="➕ Add New SIP Account"
-                        android:textColor="#FFFFFF"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <EditText
-                        android:id="@+id/etAccountLabel"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Account Name / Label (e.g. BanglaCall)"
-                        android:inputType="text"
-                        android:textColor="#FFFFFF"
-                        android:textColorHint="#E2E8F0"
-                        android:textSize="13sp" />
-
-                    <EditText
-                        android:id="@+id/etUsername"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="SIP Username / Number"
-                        android:inputType="text"
-                        android:textColor="#FFFFFF"
-                        android:textColorHint="#E2E8F0"
-                        android:textSize="13sp" />
-
-                    <EditText
-                        android:id="@+id/etPassword"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="SIP Password"
-                        android:inputType="textPassword"
-                        android:textColor="#FFFFFF"
-                        android:textColorHint="#E2E8F0"
-                        android:textSize="13sp" />
-
-                    <EditText
-                        android:id="@+id/etDomain"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Domain / Server IP"
-                        android:inputType="textUri"
-                        android:textColor="#FFFFFF"
-                        android:textColorHint="#E2E8F0"
-                        android:textSize="13sp" />
-
-                    <Spinner
-                        android:id="@+id/spinnerTransport"
-                        android:layout_width="match_parent"
-                        android:layout_height="38dp"
-                        android:layout_marginTop="4dp"
-                        android:backgroundTint="#FFFFFF" />
+                    <Button android:id="@+id/btnBackFromSip" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back to Settings" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_ai_card"
+                        android:orientation="vertical"
+                        android:padding="12dp">
 
-                        <Button
-                            android:id="@+id/btnSaveAccount"
-                            android:layout_width="0dp"
-                            android:layout_height="44dp"
-                            android:layout_weight="1"
-                            android:backgroundTint="#38BDF8"
-                            android:text="💾 Save &amp; Register"
-                            android:textColor="#0F172A"
-                            android:textStyle="bold" />
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📡 Active SIP Accounts (Tap 🔔 for Ringtone)" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" />
+                        <LinearLayout android:id="@+id/layoutSavedAccountsContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:orientation="vertical" />
+                    </LinearLayout>
 
-                        <Button
-                            android:id="@+id/btnCancelEdit"
-                            android:layout_width="wrap_content"
-                            android:layout_height="44dp"
-                            android:layout_marginStart="8dp"
-                            android:backgroundTint="#475569"
-                            android:text="Cancel"
-                            android:textColor="#FFFFFF"
-                            android:visibility="gone" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_ai_card"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView android:id="@+id/tvFormTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="➕ Add New SIP Account" android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold" />
+                        <EditText android:id="@+id/etAccountLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Account Name (e.g. BanglaCall)" android:inputType="text" android:textColor="#FFFFFF" android:textColorHint="#E2E8F0" android:textSize="13sp" />
+                        <EditText android:id="@+id/etUsername" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="SIP Username / Number" android:inputType="text" android:textColor="#FFFFFF" android:textColorHint="#E2E8F0" android:textSize="13sp" />
+                        <EditText android:id="@+id/etPassword" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="SIP Password" android:inputType="textPassword" android:textColor="#FFFFFF" android:textColorHint="#E2E8F0" android:textSize="13sp" />
+                        <EditText android:id="@+id/etDomain" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Domain / Server IP" android:inputType="textUri" android:textColor="#FFFFFF" android:textColorHint="#E2E8F0" android:textSize="13sp" />
+                        <Spinner android:id="@+id/spinnerTransport" android:layout_width="match_parent" android:layout_height="38dp" android:layout_marginTop="4dp" android:backgroundTint="#FFFFFF" />
+
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal">
+                            <Button android:id="@+id/btnSaveAccount" android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1" android:backgroundTint="#38BDF8" android:text="💾 Save &amp; Activate" android:textColor="#0F172A" android:textStyle="bold" />
+                            <Button android:id="@+id/btnCancelEdit" android:layout_width="wrap_content" android:layout_height="44dp" android:layout_marginStart="8dp" android:backgroundTint="#475569" android:text="Cancel" android:textColor="#FFFFFF" android:visibility="gone" />
+                        </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
+            </ScrollView>
 
-                <!-- ABOUT SECTION -->
+            <!-- 5D. THEMES SUB-SCREEN -->
+            <LinearLayout
+                android:id="@+id/subUiThemes"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_ai_card"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:visibility="gone">
+
+                <Button android:id="@+id/btnBackFromThemes" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back to Settings" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="🎨 Choose AI Glass UI Style" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" />
+
+                <Button android:id="@+id/btnTheme1" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="10dp" android:background="@drawable/bg_ai_pill" android:text="1. Luminous Cyber-Glass (Default)" android:textAllCaps="false" android:textColor="#FFFFFF" />
+                <Button android:id="@+id/btnTheme2" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="8dp" android:background="@drawable/bg_ai_pill" android:text="2. Emerald Matrix AI" android:textAllCaps="false" android:textColor="#6EE7B7" />
+                <Button android:id="@+id/btnTheme3" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="8dp" android:background="@drawable/bg_ai_pill" android:text="3. Sunset Neon Cyber" android:textAllCaps="false" android:textColor="#FDA4AF" />
+                <Button android:id="@+id/btnTheme4" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="8dp" android:background="@drawable/bg_ai_pill" android:text="4. Royal Obsidian Gold" android:textAllCaps="false" android:textColor="#FDE047" />
+                <Button android:id="@+id/btnTheme5" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="8dp" android:background="@drawable/bg_ai_pill" android:text="5. Arctic Aurora Glass" android:textAllCaps="false" android:textColor="#7DD3FC" />
+            </LinearLayout>
+
+            <!-- 5E. BACKUP & RESTORE SUB-SCREEN -->
+            <LinearLayout
+                android:id="@+id/subBackupRestore"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_ai_card"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:visibility="gone">
+
+                <Button android:id="@+id/btnBackFromBackup" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back to Settings" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="💾 Backup &amp; Restore Data" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Export all your saved SIP accounts, custom ringtones, and call logs to a safe JSON file, or restore them anytime." android:textColor="#E0F2FE" android:textSize="12sp" />
+
+                <Button android:id="@+id/btnExportBackup" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="16dp" android:backgroundTint="#10B981" android:text="📤 Export Backup (.json)" android:textAllCaps="false" android:textColor="#FFFFFF" android:textStyle="bold" />
+                <Button android:id="@+id/btnImportBackup" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="10dp" android:backgroundTint="#38BDF8" android:text="📥 Import / Restore Backup (.json)" android:textAllCaps="false" android:textColor="#0F172A" android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- 5F. ABOUT SUB-SCREEN -->
+            <LinearLayout
+                android:id="@+id/subAbout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_ai_card"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:visibility="gone">
+
+                <Button android:id="@+id/btnBackFromAbout" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back to Settings" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:background="@drawable/bg_ai_card"
+                    android:layout_height="match_parent"
                     android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="14dp">
+                    android:orientation="vertical">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="ℹ️ About AI SIP Dialer v1.4"
-                        android:textColor="#7DD3FC"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
                         android:gravity="center"
-                        android:text="This app is made with help of Gemini AI\nIdea by °AKTER HOSSAIN°"
+                        android:lineSpacingExtra="8dp"
+                        android:text="🇧🇩━━━━━━━━━━━━━━━━━━━━🇧🇩\n\n🤖 Developed with Gemini AI\n💡 Idea by Akter Hossain\nApp v 1.5"
                         android:textColor="#FFFFFF"
-                        android:textSize="13sp"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
-        </ScrollView>
+
+        </FrameLayout>
 
     </FrameLayout>
 
-    <!-- ANIMATED INCOMING CALL OVERLAY CARD -->
+    <!-- ANIMATED INCOMING CALL OVERLAY -->
     <LinearLayout
         android:id="@+id/layoutIncomingOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#E6090D16"
+        android:background="#EB090D16"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center"
@@ -821,11 +828,11 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- BOTTOM LUMINOUS NAVIGATION BAR -->
+    <!-- BOTTOM NAVIGATION BAR -->
     <LinearLayout
         android:id="@+id/bottomGlassNav"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="58dp"
         android:layout_alignParentBottom="true"
         android:layout_marginHorizontal="12dp"
         android:layout_marginBottom="8dp"
@@ -834,49 +841,10 @@
         android:orientation="horizontal"
         android:paddingHorizontal="6dp">
 
-        <Button
-            android:id="@+id/btnNavKeypad"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:text="🔢\nKeypad"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp" />
-
-        <Button
-            android:id="@+id/btnNavRecents"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:text="📊\nRecents"
-            android:textAllCaps="false"
-            android:textColor="#E2E8F0"
-            android:textSize="11sp" />
-
-        <Button
-            android:id="@+id/btnNavContacts"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:text="📇\nContacts"
-            android:textAllCaps="false"
-            android:textColor="#E2E8F0"
-            android:textSize="11sp" />
-
-        <Button
-            android:id="@+id/btnNavSettings"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:text="⚙️\nSettings"
-            android:textAllCaps="false"
-            android:textColor="#E2E8F0"
-            android:textSize="11sp" />
+        <Button android:id="@+id/btnNavKeypad" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@android:color/transparent" android:text="🔢\nKeypad" android:textAllCaps="false" android:textColor="#7DD3FC" android:textSize="11sp" />
+        <Button android:id="@+id/btnNavRecents" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@android:color/transparent" android:text="📊\nRecents" android:textAllCaps="false" android:textColor="#E2E8F0" android:textSize="11sp" />
+        <Button android:id="@+id/btnNavContacts" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@android:color/transparent" android:text="📇\nContacts" android:textAllCaps="false" android:textColor="#E2E8F0" android:textSize="11sp" />
+        <Button android:id="@+id/btnNavSettings" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@android:color/transparent" android:text="⚙️\nSettings" android:textAllCaps="false" android:textColor="#E2E8F0" android:textSize="11sp" />
     </LinearLayout>
 
 </RelativeLayout>

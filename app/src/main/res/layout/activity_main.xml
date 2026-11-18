@@ -57,7 +57,7 @@
                         android:background="@drawable/bg_ai_pill"
                         android:paddingHorizontal="6dp"
                         android:paddingVertical="1dp"
-                        android:text="v1.5.5"
+                        android:text="v1.6"
                         android:textColor="#7DD3FC"
                         android:textSize="9sp"
                         android:textStyle="bold" />
@@ -627,7 +627,7 @@
 
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎨" android:textSize="22sp" />
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App UI &amp; Themes (5 Styles)" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App UI &amp; Themes (20 Styles)" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
                             <TextView android:id="@+id/tvCurrentThemeSub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Luminous Cyber-Glass" android:textColor="#BAE6FD" android:textSize="12sp" />
                         </LinearLayout>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
@@ -664,7 +664,7 @@
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ℹ️" android:textSize="22sp" />
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="About" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App v1.5.5 • Credits &amp; Developer Info" android:textColor="#BAE6FD" android:textSize="12sp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App v1.6 • Credits &amp; Developer Info" android:textColor="#BAE6FD" android:textSize="12sp" />
                         </LinearLayout>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
                     </LinearLayout>
@@ -737,7 +737,7 @@
                 </LinearLayout>
             </ScrollView>
 
-            <!-- 5D. THEMES SUB-SCREEN -->
+            <!-- 5D. THEMES SUB-SCREEN (20 Themes Scrollable Container) -->
             <LinearLayout
                 android:id="@+id/subUiThemes"
                 android:layout_width="match_parent"
@@ -748,13 +748,20 @@
                 android:visibility="gone">
 
                 <Button android:id="@+id/btnBackFromThemes" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back to Settings" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="🎨 Choose AI Glass UI Style" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="🎨 Choose From 20 AI UI Themes" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" />
 
-                <Button android:id="@+id/btnTheme1" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="10dp" android:background="@drawable/bg_ai_pill" android:text="1. Luminous Cyber-Glass (Default)" android:textAllCaps="false" android:textColor="#FFFFFF" />
-                <Button android:id="@+id/btnTheme2" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="8dp" android:background="@drawable/bg_ai_pill" android:text="2. Emerald Matrix AI" android:textAllCaps="false" android:textColor="#6EE7B7" />
-                <Button android:id="@+id/btnTheme3" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="8dp" android:background="@drawable/bg_ai_pill" android:text="3. Sunset Neon Cyber" android:textAllCaps="false" android:textColor="#FDA4AF" />
-                <Button android:id="@+id/btnTheme4" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="8dp" android:background="@drawable/bg_ai_pill" android:text="4. Royal Obsidian Gold" android:textAllCaps="false" android:textColor="#FDE047" />
-                <Button android:id="@+id/btnTheme5" android:layout_width="match_parent" android:layout_height="46dp" android:layout_marginTop="8dp" android:background="@drawable/bg_ai_pill" android:text="5. Arctic Aurora Glass" android:textAllCaps="false" android:textColor="#7DD3FC" />
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="8dp">
+
+                    <LinearLayout
+                        android:id="@+id/layoutThemesListContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingBottom="12dp" />
+                </ScrollView>
             </LinearLayout>
 
             <!-- 5E. BACKUP & RESTORE SUB-SCREEN -->

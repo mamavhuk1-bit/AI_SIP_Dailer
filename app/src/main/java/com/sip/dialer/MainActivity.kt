@@ -42,6 +42,7 @@ import android.text.style.RelativeSizeSpan
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
+import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.*
@@ -605,17 +606,84 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private data class AppThemeItem(val id: Int, val name: String, val bgRes: Int, val accentColor: String, val isHackerGreen: Boolean = false)
+
+    private fun getAll20Themes(): List<AppThemeItem> = listOf(
+        AppThemeItem(1, "1. Luminous Cyber-Glass (Default)", R.drawable.bg_theme_luminous, "#FFFFFF"),
+        AppThemeItem(2, "2. Emerald Matrix AI", R.drawable.bg_theme_emerald, "#6EE7B7"),
+        AppThemeItem(3, "3. Sunset Neon Cyber", R.drawable.bg_theme_sunset, "#FDA4AF"),
+        AppThemeItem(4, "4. Royal Obsidian Gold", R.drawable.bg_theme_obsidian, "#FDE047"),
+        AppThemeItem(5, "5. Arctic Aurora Glass", R.drawable.bg_theme_aurora, "#7DD3FC"),
+        AppThemeItem(6, "6. 💻 Matrix Hacker (Black & Neon Green)", R.drawable.bg_theme_hacker, "#00FF41", true),
+        AppThemeItem(7, "7. Cyberpunk 2077 Neon", R.drawable.bg_theme_cyberpunk, "#FACC15"),
+        AppThemeItem(8, "8. Crimson Blood Vampire", R.drawable.bg_theme_crimson, "#FCA5A5"),
+        AppThemeItem(9, "9. Deep Ocean Abyss", R.drawable.bg_theme_ocean, "#38BDF8"),
+        AppThemeItem(10, "10. Mystic Amethyst Purple", R.drawable.bg_theme_amethyst, "#E879F9"),
+        AppThemeItem(11, "11. Solar Flare Amber", R.drawable.bg_theme_solar, "#FDBA74"),
+        AppThemeItem(12, "12. Midnight Stealth Blue", R.drawable.bg_theme_midnight, "#93C5FD"),
+        AppThemeItem(13, "13. Enchanted Forest Pine", R.drawable.bg_theme_forest, "#86EFAC"),
+        AppThemeItem(14, "14. Sakura Rose Blossom", R.drawable.bg_theme_sakura, "#F9A8D4"),
+        AppThemeItem(15, "15. Dracula Dark Code", R.drawable.bg_theme_dracula, "#BD93F9"),
+        AppThemeItem(16, "16. Electric Cobalt Storm", R.drawable.bg_theme_cobalt, "#60A5FA"),
+        AppThemeItem(17, "17. Molten Lava Magma", R.drawable.bg_theme_lava, "#F87171"),
+        AppThemeItem(18, "18. Toxic Biohazard Lime", R.drawable.bg_theme_toxic, "#A3E635"),
+        AppThemeItem(19, "19. Cosmic Nebula Galaxy", R.drawable.bg_theme_galaxy, "#C084FC"),
+        AppThemeItem(20, "20. Vintage Bronze Steampunk", R.drawable.bg_theme_bronze, "#FCD34D")
+    )
+
+    private fun populate20ThemesList() {
+        val container = findViewById<LinearLayout>(R.id.layoutThemesListContainer) ?: return
+        container.removeAllViews()
+        val currentId = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE).getInt("ui_theme", 1)
+
+        for (item in getAll20Themes()) {
+            val isSelected = item.id == currentId
+            val btn = Button(this).apply {
+                text = if (isSelected) "✅ ${item.name}" else item.name
+                textSize = 12.5f
+                isAllCaps = false
+                gravity = Gravity.START or Gravity.CENTER_VERTICAL
+                setPadding(36, 0, 28, 0)
+                setTextColor(Color.parseColor(item.accentColor))
+                setBackgroundResource(R.drawable.bg_ai_pill)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    118
+                ).apply { setMargins(0, 0, 0, 14) }
+                setOnClickListener {
+                    selectUiTheme(item.id)
+                    populate20ThemesList()
+                }
+            }
+            container.addView(btn)
+        }
+    }
+
+    private fun applyGlobalTextColor(view: View, colorInt: Int) {
+        if (view is TextView) {
+            view.setTextColor(colorInt)
+            if (view is EditText) view.setHintTextColor(Color.parseColor("#8000FF41"))
+        } else if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                applyGlobalTextColor(view.getChildAt(i), colorInt)
+            }
+        }
+    }
+
     private fun applySavedTheme() {
         val themeId = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE).getInt("ui_theme", 1)
-        val (resId, name) = when (themeId) {
-            2 -> R.drawable.bg_theme_emerald to "Emerald Matrix AI"
-            3 -> R.drawable.bg_theme_sunset to "Sunset Neon Cyber"
-            4 -> R.drawable.bg_theme_obsidian to "Royal Obsidian Gold"
-            5 -> R.drawable.bg_theme_aurora to "Arctic Aurora Glass"
-            else -> R.drawable.bg_theme_luminous to "Luminous Cyber-Glass"
+        val item = getAll20Themes().find { it.id == themeId } ?: getAll20Themes().first()
+        rootContainer.setBackgroundResource(item.bgRes)
+        tvCurrentThemeSub.text = item.name
+
+        if (item.isHackerGreen) {
+            applyGlobalTextColor(rootContainer, Color.parseColor("#00FF41"))
+        } else {
+            applyGlobalTextColor(rootContainer, Color.WHITE)
+            tvLiveClockDate.setTextColor(Color.parseColor("#FDE047"))
+            tvAiLiveEngineStatus.setTextColor(Color.parseColor("#6EE7B7"))
+            tvIspName.setTextColor(Color.parseColor("#BAE6FD"))
         }
-        rootContainer.setBackgroundResource(resId)
-        tvCurrentThemeSub.text = name
     }
 
     private fun selectUiTheme(themeId: Int) {
@@ -684,7 +752,7 @@ class MainActivity : AppCompatActivity() {
                 renderSettingsAccountsList()
                 subSipAccount
             }
-            "THEMES" -> subUiThemes
+            "THEMES" -> { populate20ThemesList(); subUiThemes }
             "BACKUP" -> subBackupRestore
             "ABOUT" -> subAbout
             else -> {
@@ -1713,11 +1781,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnBackFromBackup).setOnClickListener { openSettingsSubScreen("HUB") }
         findViewById<Button>(R.id.btnBackFromAbout).setOnClickListener { openSettingsSubScreen("HUB") }
 
-        findViewById<Button>(R.id.btnTheme1).setOnClickListener { selectUiTheme(1) }
-        findViewById<Button>(R.id.btnTheme2).setOnClickListener { selectUiTheme(2) }
-        findViewById<Button>(R.id.btnTheme3).setOnClickListener { selectUiTheme(3) }
-        findViewById<Button>(R.id.btnTheme4).setOnClickListener { selectUiTheme(4) }
-        findViewById<Button>(R.id.btnTheme5).setOnClickListener { selectUiTheme(5) }
+
 
         switchAutoRecord.setOnCheckedChangeListener { _, isChecked ->
             getSharedPreferences("SipPrefs", Context.MODE_PRIVATE).edit().putBoolean("auto_record", isChecked).apply()

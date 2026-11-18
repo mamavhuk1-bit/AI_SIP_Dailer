@@ -1,8 +1,10 @@
 package com.sip.dialer
 
 import android.Manifest
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
+import android.animation.ValueAnimator
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
@@ -25,12 +27,15 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.ContactsContract
+import android.text.Editable
 import android.text.SpannableString
 import android.text.Spanned
+import android.text.TextWatcher
 import android.text.style.RelativeSizeSpan
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -46,6 +51,7 @@ import java.net.Socket
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
@@ -53,70 +59,124 @@ class MainActivity : AppCompatActivity() {
     private lateinit var core: Core
     private var currentCall: Call? = null
     private var isRecording = false
+    private var isOnHold = false
     private var currentRecordFilePath: String? = null
     private var lastSavedRecordFileName: String = "Not Recorded"
     private var mediaPlayer: MediaPlayer? = null
 
-    // Incoming Call Ringtone & Vibration
     private var incomingRingtone: Ringtone? = null
-    private var incomingDialog: AlertDialog? = null
-
+    private var pulseAnimator: ObjectAnimator? = null
     private var proximityWakeLock: PowerManager.WakeLock? = null
 
-    // Active Account Info
-    private var activeDomain: String = ""
-    private var activeLabel: String = ""
+    // Multi-Account Simultaneous Tracking
+    private val accountPingMap = ConcurrentHashMap<String, String>()
+    private val accountStateMap = ConcurrentHashMap<String, String>()
+    private var editingAccountIndex: Int = -1
 
-    // Live Call Timer
+    // Active Call Info
+    private var activeCallNumber = ""
+    private var activeCallName = ""
+    private var activeCallLineLabel = ""
+    private var activeCallType = "Dialed"
+
+    // Timers
     private val timerHandler = Handler(Looper.getMainLooper())
     private var callStartTimeMillis = 0L
     private var isTimerRunning = false
     private var lastFormattedDuration = "00:00"
 
-    // Live Server Ping
     private val pingHandler = Handler(Looper.getMainLooper())
     private var isPinging = false
 
-    // Call History Tracking
-    private var activeCallNumber = ""
-    private var activeCallType = "Dialed"
-
-    // Quality tracking variables
+    // Quality Metrics
     private var lastQualityRating = 0f
     private var lastPacketLoss = 0f
     private var lastJitter = 0f
     private var lastDelay = 0f
     private var lastCodec = "Unknown"
 
-    // UI Elements
-    private lateinit var tvStatus: TextView
-    private lateinit var tvLivePing: TextView
+    // In-App Contacts Cache
+    private val phoneContactsList = mutableListOf<Pair<String, String>>()
+    private var currentHistoryFilter = "All"
+
+    // UI References
+    private lateinit var layoutMultiPingStrip: LinearLayout
     private lateinit var tvNetworkType: TextView
     private lateinit var tvPublicIp: TextView
     private lateinit var tvIspName: TextView
     private lateinit var btnRefreshNet: TextView
+
+    // Tab Views
+    private lateinit var tabKeypadView: View
+    private lateinit var layoutActiveCallScreen: LinearLayout
+    private lateinit var tabRecentsView: LinearLayout
+    private lateinit var tabContactsView: LinearLayout
+    private lateinit var tabSettingsView: ScrollView
+
+    // Nav Buttons
     private lateinit var btnNavKeypad: Button
-    private lateinit var btnRecentCalls: Button
-    private lateinit var btnToggleAccount: Button
-    private lateinit var layoutLoginCard: LinearLayout
-    private lateinit var btnSavedAccountsList: Button
+    private lateinit var btnNavRecents: Button
+    private lateinit var btnNavContacts: Button
+    private lateinit var btnNavSettings: Button
+
+    // Keypad & Dial
+    private lateinit var etDialNumber: EditText
+    private lateinit var btnMakeCall: Button
+    private lateinit var btnBackspace: Button
+    private lateinit var btnRecordingsList: Button
+
+    // Dedicated Active In-Call Views
+    private lateinit var tvInCallAccountBadge: TextView
+    private lateinit var tvInCallName: TextView
+    private lateinit var tvInCallNumber: TextView
+    private lateinit var tvInCallStatusTimer: TextView
+    private lateinit var btnMute: Button
+    private lateinit var btnHold: Button
+    private lateinit var btnSpeaker: Button
+    private lateinit var btnRecord: Button
+    private lateinit var btnToggleInCallDtmf: Button
+    private lateinit var btnInCallAddNote: Button
+    private lateinit var layoutInCallDtmf: LinearLayout
+    private lateinit var tvDtmfEntered: TextView
+    private lateinit var gridInCallDtmf: GridLayout
+    private lateinit var btnEndCall: Button
+
+    // Incoming Call Animated Overlay
+    private lateinit var layoutIncomingOverlay: LinearLayout
+    private lateinit var tvIncomingLineBadge: TextView
+    private lateinit var tvIncomingPulseRing: TextView
+    private lateinit var tvIncomingCallerName: TextView
+    private lateinit var tvIncomingCallerNumber: TextView
+    private lateinit var btnAnswerIncoming: Button
+    private lateinit var btnDeclineIncoming: Button
+
+    // Recents Views
+    private lateinit var barMissed: View
+    private lateinit var barDialed: View
+    private lateinit var barReceived: View
+    private lateinit var tvChartLegend: TextView
+    private lateinit var tabFilterAll: Button
+    private lateinit var tabFilterMissed: Button
+    private lateinit var tabFilterDialed: Button
+    private lateinit var tabFilterReceived: Button
+    private lateinit var layoutHistoryTableRows: LinearLayout
+    private lateinit var btnClearHistory: Button
+
+    // In-App Contacts Views
+    private lateinit var etSearchContact: EditText
+    private lateinit var layoutContactsList: LinearLayout
+
+    // Settings Views
+    private lateinit var spinnerDefaultCallAccount: Spinner
+    private lateinit var layoutSavedAccountsContainer: LinearLayout
+    private lateinit var tvFormTitle: TextView
     private lateinit var etAccountLabel: EditText
     private lateinit var etUsername: EditText
     private lateinit var etPassword: EditText
     private lateinit var etDomain: EditText
     private lateinit var spinnerTransport: Spinner
-    private lateinit var btnLogin: Button
-    private lateinit var etDialNumber: EditText
-    private lateinit var btnBackspace: Button
-    private lateinit var btnCallToggle: Button
-    private lateinit var btnContacts: Button
-    private lateinit var btnRecordingsList: Button
-    private lateinit var layoutInCall: LinearLayout
-    private lateinit var tvCallState: TextView
-    private lateinit var tvCallTimer: TextView
-    private lateinit var btnMute: Button
-    private lateinit var btnSpeaker: Button
-    private lateinit var btnRecord: Button
+    private lateinit var btnSaveAccount: Button
+    private lateinit var btnCancelEdit: Button
 
     private val timerRunnable = object : Runnable {
         override fun run() {
@@ -125,7 +185,7 @@ class MainActivity : AppCompatActivity() {
                 val mins = elapsedSec / 60
                 val secs = elapsedSec % 60
                 lastFormattedDuration = String.format(Locale.US, "%02d:%02d", mins, secs)
-                tvCallTimer.text = "⏱ $lastFormattedDuration"
+                tvInCallStatusTimer.text = if (isOnHold) "⏸️ ON HOLD ($lastFormattedDuration)" else "⏱ $lastFormattedDuration"
                 timerHandler.postDelayed(this, 1000)
             }
         }
@@ -134,8 +194,8 @@ class MainActivity : AppCompatActivity() {
     private val pingRunnable = object : Runnable {
         override fun run() {
             if (isPinging) {
-                measureServerPing()
-                pingHandler.postDelayed(this, 3000)
+                measureAllAccountsPing()
+                pingHandler.postDelayed(this, 3500)
             }
         }
     }
@@ -151,25 +211,9 @@ class MainActivity : AppCompatActivity() {
 
         override fun onLost(network: Network) {
             runOnUiThread {
-                tvNetworkType.text = "⚠️ No Internet"
-                tvPublicIp.text = "🌐 IP: Offline"
+                tvNetworkType.text = "⚠️ Offline"
+                tvPublicIp.text = "🌐 IP: No Network"
                 tvIspName.text = "ISP: Disconnected"
-            }
-        }
-    }
-
-    private val pickContactLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val contactUri = result.data?.data ?: return@registerForActivityResult
-            val projection = arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER)
-            contentResolver.query(contactUri, projection, null, null, null)?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
-                    val number = cursor.getString(numberIndex).replace("\\s+".toRegex(), "")
-                    etDialNumber.setText(number)
-                }
             }
         }
     }
@@ -177,79 +221,12 @@ class MainActivity : AppCompatActivity() {
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
+        if (permissions[Manifest.permission.READ_CONTACTS] == true) {
+            loadPhoneContacts()
+        }
         if (permissions[Manifest.permission.RECORD_AUDIO] != true) {
             Toast.makeText(this, "Microphone permission is required for calls!", Toast.LENGTH_LONG).show()
         }
-    }
-
-    private fun setCallButtonState(inCall: Boolean) {
-        if (inCall) {
-            btnCallToggle.setBackgroundResource(R.drawable.bg_end_call_btn)
-            btnCallToggle.text = "📵"
-        } else {
-            btnCallToggle.setBackgroundResource(R.drawable.bg_call_btn)
-            btnCallToggle.text = "📞"
-        }
-    }
-
-    // --- Ringtone & Vibration Helpers ---
-    private fun startIncomingRingtone() {
-        try {
-            stopIncomingRingtone()
-            var ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-            if (ringtoneUri == null) {
-                ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            }
-            incomingRingtone = RingtoneManager.getRingtone(applicationContext, ringtoneUri)
-            incomingRingtone?.apply {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    isLooping = true
-                }
-                audioAttributes = AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-                play()
-            }
-
-            // Start repeating vibration
-            val pattern = longArrayOf(0, 700, 600)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-                vm.defaultVibrator.vibrate(VibrationEffect.createWaveform(pattern, 0))
-            } else {
-                @Suppress("DEPRECATION")
-                val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    v.vibrate(VibrationEffect.createWaveform(pattern, 0))
-                } else {
-                    @Suppress("DEPRECATION")
-                    v.vibrate(pattern, 0)
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun stopIncomingRingtone() {
-        try {
-            if (incomingRingtone?.isPlaying == true) {
-                incomingRingtone?.stop()
-            }
-        } catch (_: Exception) {}
-        incomingRingtone = null
-
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-                vm.defaultVibrator.cancel()
-            } else {
-                @Suppress("DEPRECATION")
-                val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                v.cancel()
-            }
-        } catch (_: Exception) {}
     }
 
     private val coreListener = object : CoreListenerStub() {
@@ -261,28 +238,17 @@ class MainActivity : AppCompatActivity() {
         ) {
             runOnUiThread {
                 val user = account.params.identityAddress?.username ?: ""
-                val tag = if (activeLabel.isNotEmpty()) "$activeLabel ($user)" else user
-                when (state) {
-                    RegistrationState.Ok -> {
-                        tvStatus.text = "● $tag ▾"
-                        tvStatus.setTextColor(0xFF6EE7B7.toInt())
-                        layoutLoginCard.visibility = View.GONE
-                        startLivePing()
-                    }
-                    RegistrationState.Progress -> {
-                        tvStatus.text = "● Connecting $tag..."
-                        tvStatus.setTextColor(0xFFFDE047.toInt())
-                    }
-                    RegistrationState.Failed -> {
-                        tvStatus.text = "● Failed: $tag ▾"
-                        tvStatus.setTextColor(0xFFFCA5A5.toInt())
-                        stopLivePing()
-                    }
-                    else -> {
-                        tvStatus.text = "● Offline ($tag) ▾"
-                        tvStatus.setTextColor(0xFFFCA5A5.toInt())
-                        stopLivePing()
-                    }
+                val domain = account.params.identityAddress?.domain ?: ""
+                val key = "$user@$domain"
+                val statusStr = when (state) {
+                    RegistrationState.Ok -> "OK"
+                    RegistrationState.Progress -> "WAIT"
+                    else -> "FAIL"
+                }
+                accountStateMap[key] = statusStr
+                refreshTopMultiPingStrip()
+                if (tabSettingsView.visibility == View.VISIBLE) {
+                    renderSettingsAccountsList()
                 }
             }
         }
@@ -297,76 +263,76 @@ class MainActivity : AppCompatActivity() {
                 when (state) {
                     Call.State.OutgoingInit, Call.State.OutgoingProgress, Call.State.OutgoingRinging -> {
                         currentCall = call
-                        setCallButtonState(true)
+                        isOnHold = false
                         activeCallNumber = call.remoteAddress.username ?: call.remoteAddress.asStringUriOnly()
+                        activeCallName = resolveContactName(activeCallNumber)
                         activeCallType = "Dialed"
                         lastFormattedDuration = "00:00"
                         lastSavedRecordFileName = "Not Recorded"
-                        layoutInCall.visibility = View.VISIBLE
-                        tvCallState.text = "📤 Dialing $activeCallNumber..."
-                        tvCallTimer.text = "⏱ Ringing..."
+                        showDedicatedActiveCallScreen("📤 Dialing...")
                         enableProximitySensor(true)
                     }
                     Call.State.IncomingReceived -> {
                         currentCall = call
-                        setCallButtonState(true)
+                        isOnHold = false
                         activeCallNumber = call.remoteAddress.username ?: call.remoteAddress.asStringUriOnly()
+                        activeCallName = resolveContactName(activeCallNumber)
                         activeCallType = "Received"
                         lastFormattedDuration = "00:00"
                         lastSavedRecordFileName = "Not Recorded"
+
+                        // Identify which SIP account received this incoming call
+                        val toUser = call.toAddress?.username ?: ""
+                        val toDomain = call.toAddress?.domain ?: ""
+                        activeCallLineLabel = findLabelForAccount(toUser, toDomain)
+
                         startIncomingRingtone()
-                        showIncomingCallDialog(call)
+                        showAnimatedIncomingOverlay()
                     }
                     Call.State.Connected, Call.State.StreamsRunning -> {
                         stopIncomingRingtone()
-                        incomingDialog?.dismiss()
+                        hideAnimatedIncomingOverlay()
                         currentCall = call
-                        setCallButtonState(true)
-                        layoutInCall.visibility = View.VISIBLE
-                        tvCallState.text = "🟢 Active: $activeCallNumber"
+                        showDedicatedActiveCallScreen("🟢 Connected")
                         startCallTimer()
                         enableProximitySensor(true)
                         captureCallMetrics(call)
                     }
+                    Call.State.Paused, Call.State.PausedByRemote -> {
+                        isOnHold = true
+                        btnHold.text = "▶️\nResume"
+                        btnHold.setBackgroundColor(0xFFD97706.toInt())
+                    }
                     Call.State.End, Call.State.Released -> {
                         stopIncomingRingtone()
-                        incomingDialog?.dismiss()
+                        hideAnimatedIncomingOverlay()
                         stopCallTimer()
                         enableProximitySensor(false)
-                        setCallButtonState(false)
                         if (isRecording) {
-                            try {
-                                call.stopRecording()
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
+                            try { call.stopRecording() } catch (_: Exception) {}
                             isRecording = false
-                            btnRecord.text = "⏺ Record"
-                            btnRecord.setBackgroundColor(0xFF1E293B.toInt())
+                            btnRecord.text = "⏺\nRecord"
+                            btnRecord.setBackgroundResource(R.drawable.bg_ai_pill)
                         }
                         if (activeCallNumber.isNotEmpty()) {
                             val finalType = if (lastFormattedDuration == "00:00" && activeCallType == "Received") "Missed" else activeCallType
-                            saveCallToHistory(activeCallNumber, finalType, lastFormattedDuration)
+                            saveCallToHistory(activeCallNumber, activeCallName, activeCallLineLabel, finalType, lastFormattedDuration)
                             activeCallNumber = ""
                         }
-                        layoutInCall.visibility = View.GONE
+                        hideDedicatedActiveCallScreen()
                         currentCall = null
                         showCallQualitySummary()
                     }
                     Call.State.Error -> {
                         stopIncomingRingtone()
-                        incomingDialog?.dismiss()
+                        hideAnimatedIncomingOverlay()
                         stopCallTimer()
                         enableProximitySensor(false)
-                        setCallButtonState(false)
-                        isRecording = false
-                        btnRecord.text = "⏺ Record"
-                        btnRecord.setBackgroundColor(0xFF1E293B.toInt())
                         if (activeCallNumber.isNotEmpty()) {
-                            saveCallToHistory(activeCallNumber, "Missed", "00:00")
+                            saveCallToHistory(activeCallNumber, activeCallName, activeCallLineLabel, "Missed", "00:00")
                             activeCallNumber = ""
                         }
-                        layoutInCall.visibility = View.GONE
+                        hideDedicatedActiveCallScreen()
                         currentCall = null
                         Toast.makeText(this@MainActivity, "Call Error: $message", Toast.LENGTH_LONG).show()
                     }
@@ -386,61 +352,879 @@ class MainActivity : AppCompatActivity() {
 
         initViews()
         setupProximitySensor()
-        requestAppPermissions()
         initLinphoneCore()
         setupDialpad()
+        setupInCallDtmfPad()
         setupListeners()
+        requestAppPermissions()
         registerNetworkMonitor()
         updateNetworkStatusAndFetchIsp()
-        loadSavedAccountsAndAutoLogin()
+        registerAllSavedAccountsSimultaneously()
+        startLivePing()
     }
 
     private fun initViews() {
-        tvStatus = findViewById(R.id.tvStatus)
-        tvLivePing = findViewById(R.id.tvLivePing)
+        layoutMultiPingStrip = findViewById(R.id.layoutMultiPingStrip)
         tvNetworkType = findViewById(R.id.tvNetworkType)
         tvPublicIp = findViewById(R.id.tvPublicIp)
         tvIspName = findViewById(R.id.tvIspName)
         btnRefreshNet = findViewById(R.id.btnRefreshNet)
+
+        tabKeypadView = findViewById(R.id.tabKeypadView)
+        layoutActiveCallScreen = findViewById(R.id.layoutActiveCallScreen)
+        tabRecentsView = findViewById(R.id.tabRecentsView)
+        tabContactsView = findViewById(R.id.tabContactsView)
+        tabSettingsView = findViewById(R.id.tabSettingsView)
+
         btnNavKeypad = findViewById(R.id.btnNavKeypad)
-        btnRecentCalls = findViewById(R.id.btnRecentCalls)
-        btnToggleAccount = findViewById(R.id.btnToggleAccount)
-        layoutLoginCard = findViewById(R.id.layoutLoginCard)
-        btnSavedAccountsList = findViewById(R.id.btnSavedAccountsList)
+        btnNavRecents = findViewById(R.id.btnNavRecents)
+        btnNavContacts = findViewById(R.id.btnNavContacts)
+        btnNavSettings = findViewById(R.id.btnNavSettings)
+
+        etDialNumber = findViewById(R.id.etDialNumber)
+        btnMakeCall = findViewById(R.id.btnMakeCall)
+        btnBackspace = findViewById(R.id.btnBackspace)
+        btnRecordingsList = findViewById(R.id.btnRecordingsList)
+
+        tvInCallAccountBadge = findViewById(R.id.tvInCallAccountBadge)
+        tvInCallName = findViewById(R.id.tvInCallName)
+        tvInCallNumber = findViewById(R.id.tvInCallNumber)
+        tvInCallStatusTimer = findViewById(R.id.tvInCallStatusTimer)
+        btnMute = findViewById(R.id.btnMute)
+        btnHold = findViewById(R.id.btnHold)
+        btnSpeaker = findViewById(R.id.btnSpeaker)
+        btnRecord = findViewById(R.id.btnRecord)
+        btnToggleInCallDtmf = findViewById(R.id.btnToggleInCallDtmf)
+        btnInCallAddNote = findViewById(R.id.btnInCallAddNote)
+        layoutInCallDtmf = findViewById(R.id.layoutInCallDtmf)
+        tvDtmfEntered = findViewById(R.id.tvDtmfEntered)
+        gridInCallDtmf = findViewById(R.id.gridInCallDtmf)
+        btnEndCall = findViewById(R.id.btnEndCall)
+
+        layoutIncomingOverlay = findViewById(R.id.layoutIncomingOverlay)
+        tvIncomingLineBadge = findViewById(R.id.tvIncomingLineBadge)
+        tvIncomingPulseRing = findViewById(R.id.tvIncomingPulseRing)
+        tvIncomingCallerName = findViewById(R.id.tvIncomingCallerName)
+        tvIncomingCallerNumber = findViewById(R.id.tvIncomingCallerNumber)
+        btnAnswerIncoming = findViewById(R.id.btnAnswerIncoming)
+        btnDeclineIncoming = findViewById(R.id.btnDeclineIncoming)
+
+        barMissed = findViewById(R.id.barMissed)
+        barDialed = findViewById(R.id.barDialed)
+        barReceived = findViewById(R.id.barReceived)
+        tvChartLegend = findViewById(R.id.tvChartLegend)
+        tabFilterAll = findViewById(R.id.tabFilterAll)
+        tabFilterMissed = findViewById(R.id.tabFilterMissed)
+        tabFilterDialed = findViewById(R.id.tabFilterDialed)
+        tabFilterReceived = findViewById(R.id.tabFilterReceived)
+        layoutHistoryTableRows = findViewById(R.id.layoutHistoryTableRows)
+        btnClearHistory = findViewById(R.id.btnClearHistory)
+
+        etSearchContact = findViewById(R.id.etSearchContact)
+        layoutContactsList = findViewById(R.id.layoutContactsList)
+
+        spinnerDefaultCallAccount = findViewById(R.id.spinnerDefaultCallAccount)
+        layoutSavedAccountsContainer = findViewById(R.id.layoutSavedAccountsContainer)
+        tvFormTitle = findViewById(R.id.tvFormTitle)
         etAccountLabel = findViewById(R.id.etAccountLabel)
         etUsername = findViewById(R.id.etUsername)
         etPassword = findViewById(R.id.etPassword)
         etDomain = findViewById(R.id.etDomain)
         spinnerTransport = findViewById(R.id.spinnerTransport)
-        btnLogin = findViewById(R.id.btnLogin)
-        etDialNumber = findViewById(R.id.etDialNumber)
-        btnBackspace = findViewById(R.id.btnBackspace)
-        btnCallToggle = findViewById(R.id.btnCallToggle)
-        btnContacts = findViewById(R.id.btnContacts)
-        btnRecordingsList = findViewById(R.id.btnRecordingsList)
-        layoutInCall = findViewById(R.id.layoutInCall)
-        tvCallState = findViewById(R.id.tvCallState)
-        tvCallTimer = findViewById(R.id.tvCallTimer)
-        btnMute = findViewById(R.id.btnMute)
-        btnSpeaker = findViewById(R.id.btnSpeaker)
-        btnRecord = findViewById(R.id.btnRecord)
+        btnSaveAccount = findViewById(R.id.btnSaveAccount)
+        btnCancelEdit = findViewById(R.id.btnCancelEdit)
 
         val transports = arrayOf("UDP", "TCP", "TLS")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, transports)
-        spinnerTransport.adapter = adapter
+        spinnerTransport.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, transports)
     }
 
-    // --- Network Type (Wi-Fi / Mobile Data) & Live IP + ISP Detection ---
+    // --- Tab Navigation with Smooth Fade Animation ---
+    private fun switchMainTab(tab: String) {
+        tabKeypadView.visibility = View.GONE
+        tabRecentsView.visibility = View.GONE
+        tabContactsView.visibility = View.GONE
+        tabSettingsView.visibility = View.GONE
+
+        btnNavKeypad.setTextColor(0xFFE2E8F0.toInt())
+        btnNavRecents.setTextColor(0xFFE2E8F0.toInt())
+        btnNavContacts.setTextColor(0xFFE2E8F0.toInt())
+        btnNavSettings.setTextColor(0xFFE2E8F0.toInt())
+
+        val targetView: View = when (tab) {
+            "RECENTS" -> {
+                btnNavRecents.setTextColor(0xFF7DD3FC.toInt())
+                renderCallHistoryTable(currentHistoryFilter)
+                tabRecentsView
+            }
+            "CONTACTS" -> {
+                btnNavContacts.setTextColor(0xFF7DD3FC.toInt())
+                if (phoneContactsList.isEmpty()) loadPhoneContacts()
+                renderContactsList(etSearchContact.text.toString())
+                tabContactsView
+            }
+            "SETTINGS" -> {
+                btnNavSettings.setTextColor(0xFF7DD3FC.toInt())
+                setupDefaultCallModeSpinner()
+                renderSettingsAccountsList()
+                tabSettingsView
+            }
+            else -> {
+                btnNavKeypad.setTextColor(0xFF7DD3FC.toInt())
+                if (currentCall != null) layoutActiveCallScreen else tabKeypadView
+            }
+        }
+
+        targetView.alpha = 0f
+        targetView.visibility = View.VISIBLE
+        targetView.animate().alpha(1f).setDuration(220).start()
+    }
+
+    // --- Dedicated Active Call Screen Transitions ---
+    private fun showDedicatedActiveCallScreen(statusText: String) {
+        tabRecentsView.visibility = View.GONE
+        tabContactsView.visibility = View.GONE
+        tabSettingsView.visibility = View.GONE
+        tabKeypadView.visibility = View.GONE
+
+        tvInCallAccountBadge.text = "📡 Line: ${activeCallLineLabel.ifEmpty { "SIP" }}"
+        tvInCallName.text = activeCallName.ifEmpty { activeCallNumber }
+        tvInCallNumber.text = activeCallNumber
+        tvInCallStatusTimer.text = statusText
+        btnHold.text = "⏸️\nHold"
+        btnHold.setBackgroundResource(R.drawable.bg_ai_pill)
+        layoutInCallDtmf.visibility = View.GONE
+        tvDtmfEntered.text = "DTMF: "
+
+        layoutActiveCallScreen.alpha = 0f
+        layoutActiveCallScreen.visibility = View.VISIBLE
+        layoutActiveCallScreen.animate().alpha(1f).setDuration(250).start()
+    }
+
+    private fun hideDedicatedActiveCallScreen() {
+        layoutActiveCallScreen.visibility = View.GONE
+        switchMainTab("KEYPAD")
+    }
+
+    // --- Animated Incoming Call Overlay ---
+    private fun showAnimatedIncomingOverlay() {
+        tvIncomingLineBadge.text = "📥 Incoming on: ${activeCallLineLabel.ifEmpty { "SIP Line" }}"
+        tvIncomingCallerName.text = activeCallName.ifEmpty { activeCallNumber }
+        tvIncomingCallerNumber.text = activeCallNumber
+
+        layoutIncomingOverlay.alpha = 0f
+        layoutIncomingOverlay.visibility = View.VISIBLE
+        layoutIncomingOverlay.animate().alpha(1f).setDuration(250).start()
+
+        val scaleX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1.0f, 1.18f, 1.0f)
+        val scaleY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1.0f, 1.18f, 1.0f)
+        pulseAnimator?.cancel()
+        pulseAnimator = ObjectAnimator.ofPropertyValuesHolder(tvIncomingPulseRing, scaleX, scaleY).apply {
+            duration = 950
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = AccelerateDecelerateInterpolator()
+            start()
+        }
+    }
+
+    private fun hideAnimatedIncomingOverlay() {
+        pulseAnimator?.cancel()
+        layoutIncomingOverlay.visibility = View.GONE
+    }
+
+    // --- Simultaneous Multi-Account Registration & Live Ping ---
+    private fun getSavedAccounts(): JSONArray {
+        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
+        return JSONArray(prefs.getString("multi_accounts", "[]") ?: "[]")
+    }
+
+    private fun saveAccountsList(array: JSONArray) {
+        getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
+            .edit().putString("multi_accounts", array.toString()).apply()
+    }
+
+    private fun findLabelForAccount(user: String, domain: String): String {
+        val accounts = getSavedAccounts()
+        for (i in 0 until accounts.length()) {
+            val obj = accounts.getJSONObject(i)
+            if (obj.optString("username") == user) {
+                return "${obj.optString("label")} ($user)"
+            }
+        }
+        return if (user.isNotEmpty()) "$user@$domain" else "SIP Account"
+    }
+
+    private fun registerAllSavedAccountsSimultaneously() {
+        core.clearAccounts()
+        core.clearAllAuthInfo()
+        accountStateMap.clear()
+        accountPingMap.clear()
+
+        val accounts = getSavedAccounts()
+        if (accounts.length() == 0) {
+            refreshTopMultiPingStrip()
+            return
+        }
+
+        for (i in 0 until accounts.length()) {
+            val acc = accounts.getJSONObject(i)
+            val user = acc.getString("username")
+            val pass = acc.getString("password")
+            val domain = acc.getString("domain")
+            val transportStr = acc.optString("transport", "UDP")
+
+            val transport = when (transportStr) {
+                "TCP" -> TransportType.Tcp
+                "TLS" -> TransportType.Tls
+                else -> TransportType.Udp
+            }
+
+            val authInfo = Factory.instance().createAuthInfo(user, null, pass, null, null, domain, null)
+            core.addAuthInfo(authInfo)
+
+            val accountParams = core.createAccountParams()
+            accountParams.identityAddress = Factory.instance().createAddress("sip:$user@$domain")
+
+            val serverAddress = Factory.instance().createAddress("sip:$domain")
+            serverAddress?.transport = transport
+            accountParams.serverAddress = serverAddress
+            accountParams.isRegisterEnabled = true
+
+            val linphoneAcc = core.createAccount(accountParams)
+            core.addAccount(linphoneAcc)
+            if (i == 0) core.defaultAccount = linphoneAcc
+
+            accountStateMap["$user@$domain"] = "WAIT"
+            accountPingMap["$user@$domain"] = "-- ms"
+        }
+
+        refreshTopMultiPingStrip()
+        measureAllAccountsPing()
+    }
+
+    private fun measureAllAccountsPing() {
+        val accounts = getSavedAccounts()
+        if (accounts.length() == 0) return
+
+        for (i in 0 until accounts.length()) {
+            val acc = accounts.getJSONObject(i)
+            val user = acc.getString("username")
+            val domain = acc.getString("domain")
+            val key = "$user@$domain"
+
+            val parts = domain.split(":")
+            val host = parts[0]
+            val port = if (parts.size > 1) parts[1].toIntOrNull() ?: 5060 else 5060
+
+            thread {
+                var pingMs = -1L
+                try {
+                    val start = SystemClock.elapsedRealtime()
+                    val socket = Socket()
+                    socket.connect(InetSocketAddress(host, port), 2000)
+                    pingMs = SystemClock.elapsedRealtime() - start
+                    socket.close()
+                } catch (_: Exception) {
+                    try {
+                        val start = SystemClock.elapsedRealtime()
+                        if (java.net.InetAddress.getByName(host).isReachable(2000)) {
+                            pingMs = SystemClock.elapsedRealtime() - start
+                        }
+                    } catch (_: Exception) {}
+                }
+
+                accountPingMap[key] = if (pingMs >= 0) "${pingMs}ms" else "Active"
+                runOnUiThread { refreshTopMultiPingStrip() }
+            }
+        }
+    }
+
+    private fun refreshTopMultiPingStrip() {
+        layoutMultiPingStrip.removeAllViews()
+        val accounts = getSavedAccounts()
+
+        if (accounts.length() == 0) {
+            val tv = TextView(this).apply {
+                text = "● No SIP Account (Tap Settings to Add)"
+                setTextColor(Color.WHITE)
+                textSize = 12f
+                setTypeface(null, Typeface.BOLD)
+                setOnClickListener { switchMainTab("SETTINGS") }
+            }
+            layoutMultiPingStrip.addView(tv)
+            return
+        }
+
+        for (i in 0 until accounts.length()) {
+            val acc = accounts.getJSONObject(i)
+            val label = acc.optString("label", "SIP")
+            val user = acc.getString("username")
+            val domain = acc.getString("domain")
+            val key = "$user@$domain"
+
+            val st = accountStateMap[key] ?: "WAIT"
+            val ping = accountPingMap[key] ?: "--"
+            val dot = when (st) {
+                "OK" -> "🟢"
+                "WAIT" -> "🟡"
+                else -> "🔴"
+            }
+
+            val chip = TextView(this).apply {
+                text = "$dot $label: ⚡$ping"
+                setTextColor(if (st == "OK") Color.parseColor("#6EE7B7") else Color.parseColor("#FDE047"))
+                textSize = 11.5f
+                setTypeface(null, Typeface.BOLD)
+                setBackgroundResource(R.drawable.bg_ai_pill)
+                setPadding(22, 8, 22, 8)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { setMargins(0, 0, 14, 0) }
+                setOnClickListener { switchMainTab("SETTINGS") }
+            }
+            layoutMultiPingStrip.addView(chip)
+        }
+    }
+
+    // --- Outgoing Call Routing (Ask Every Time vs Default Account) ---
+    private fun initiateOutgoingCallFlow(destination: String) {
+        val cleanNum = destination.replace("\\s+".toRegex(), "")
+        if (cleanNum.isEmpty()) {
+            Toast.makeText(this, "Enter a number to call", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val accounts = getSavedAccounts()
+        if (accounts.length() == 0) {
+            Toast.makeText(this, "Please add a SIP account in Settings first!", Toast.LENGTH_SHORT).show()
+            switchMainTab("SETTINGS")
+            return
+        }
+
+        if (accounts.length() == 1) {
+            dialWithSpecificAccount(cleanNum, accounts.getJSONObject(0))
+            return
+        }
+
+        val prefMode = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
+            .getString("default_call_mode", "ASK") ?: "ASK"
+
+        if (prefMode != "ASK") {
+            val idx = prefMode.toIntOrNull() ?: 0
+            if (idx in 0 until accounts.length()) {
+                dialWithSpecificAccount(cleanNum, accounts.getJSONObject(idx))
+                return
+            }
+        }
+
+        // Ask Every Time Dialog
+        val choices = Array(accounts.length()) { i ->
+            val obj = accounts.getJSONObject(i)
+            val lbl = obj.optString("label", "SIP ${i + 1}")
+            val usr = obj.getString("username")
+            val dom = obj.getString("domain")
+            val ping = accountPingMap["$usr@$dom"] ?: ""
+            "📡 $lbl ($usr)  [⚡$ping]"
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("📞 Call $cleanNum Using:")
+            .setItems(choices) { _, which ->
+                dialWithSpecificAccount(cleanNum, accounts.getJSONObject(which))
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun dialWithSpecificAccount(destination: String, accJson: JSONObject) {
+        val label = accJson.optString("label", "SIP")
+        val user = accJson.getString("username")
+        val domain = accJson.getString("domain")
+        activeCallLineLabel = "$label ($user)"
+
+        val matchedAccount = core.accountList.find {
+            it.params.identityAddress?.username == user && it.params.identityAddress?.domain == domain
+        }
+        if (matchedAccount != null) {
+            core.defaultAccount = matchedAccount
+        }
+
+        val sipUri = if (destination.startsWith("sip:")) destination else "sip:$destination@$domain"
+        val remoteAddress = Factory.instance().createAddress(sipUri) ?: return
+
+        val callParams = core.createCallParams(null) ?: return
+        callParams.isAudioEnabled = true
+        callParams.recordFile = prepareRecordFilePath("OutCall")
+
+        lastQualityRating = 0f
+        lastPacketLoss = 0f
+        lastJitter = 0f
+        lastDelay = 0f
+        lastCodec = callParams.usedAudioPayloadType?.mimeType ?: "Default"
+
+        core.inviteAddressWithParams(remoteAddress, callParams)
+    }
+
+    // --- In-App Contacts Loader & Search ---
+    private fun loadPhoneContacts() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            requestAppPermissions()
+            return
+        }
+
+        thread {
+            val tempList = mutableListOf<Pair<String, String>>()
+            val seen = HashSet<String>()
+            contentResolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                arrayOf(
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER
+                ),
+                null,
+                null,
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
+            )?.use { cursor ->
+                val nameIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+                val numIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                while (cursor.moveToNext()) {
+                    val name = cursor.getString(nameIdx) ?: "Unknown"
+                    val num = (cursor.getString(numIdx) ?: "").replace("\\s+".toRegex(), "")
+                    val key = "$name|$num"
+                    if (num.isNotEmpty() && seen.add(key)) {
+                        tempList.add(name to num)
+                    }
+                }
+            }
+
+            runOnUiThread {
+                phoneContactsList.clear()
+                phoneContactsList.addAll(tempList)
+                if (tabContactsView.visibility == View.VISIBLE) {
+                    renderContactsList(etSearchContact.text.toString())
+                }
+            }
+        }
+    }
+
+    private fun resolveContactName(number: String): String {
+        val clean = number.takeLast(10)
+        if (clean.length < 4) return number
+        val found = phoneContactsList.find { it.second.endsWith(clean) }
+        return found?.first ?: number
+    }
+
+    private fun renderContactsList(query: String) {
+        layoutContactsList.removeAllViews()
+        val q = query.trim().lowercase(Locale.getDefault())
+        val filtered = if (q.isEmpty()) phoneContactsList else {
+            phoneContactsList.filter {
+                it.first.lowercase(Locale.getDefault()).contains(q) || it.second.contains(q)
+            }
+        }
+
+        if (filtered.isEmpty()) {
+            val empty = TextView(this).apply {
+                text = "No contacts found."
+                setTextColor(Color.WHITE)
+                gravity = Gravity.CENTER
+                setPadding(16, 40, 16, 40)
+            }
+            layoutContactsList.addView(empty)
+            return
+        }
+
+        for ((name, num) in filtered.take(150)) {
+            val card = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setBackgroundResource(R.drawable.bg_ai_pill)
+                setPadding(28, 18, 28, 18)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { setMargins(0, 0, 0, 12) }
+            }
+
+            val textCol = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+
+            val tvName = TextView(this).apply {
+                text = name
+                setTextColor(Color.WHITE)
+                textSize = 14f
+                setTypeface(null, Typeface.BOLD)
+            }
+
+            val tvNum = TextView(this).apply {
+                text = num
+                setTextColor(Color.parseColor("#BAE6FD"))
+                textSize = 12f
+            }
+
+            val callIcon = TextView(this).apply {
+                text = "📞"
+                textSize = 20f
+            }
+
+            textCol.addView(tvName)
+            textCol.addView(tvNum)
+            card.addView(textCol)
+            card.addView(callIcon)
+
+            card.setOnClickListener {
+                etDialNumber.setText(num)
+                switchMainTab("KEYPAD")
+                initiateOutgoingCallFlow(num)
+            }
+
+            layoutContactsList.addView(card)
+        }
+    }
+
+    // --- Modern Chart & Table Call History ---
+    private fun saveCallToHistory(number: String, name: String, line: String, type: String, duration: String) {
+        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
+        val jsonArray = JSONArray(prefs.getString("call_history", "[]") ?: "[]")
+
+        val timeStr = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date())
+        val entry = JSONObject().apply {
+            put("number", number)
+            put("name", name)
+            put("line", line)
+            put("type", type)
+            put("duration", duration)
+            put("time", timeStr)
+        }
+
+        val updated = JSONArray()
+        updated.put(entry)
+        for (i in 0 until minOf(jsonArray.length(), 59)) {
+            updated.put(jsonArray.getJSONObject(i))
+        }
+        prefs.edit().putString("call_history", updated.toString()).apply()
+    }
+
+    private fun renderCallHistoryTable(filter: String) {
+        currentHistoryFilter = filter
+        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
+        val jsonArray = JSONArray(prefs.getString("call_history", "[]") ?: "[]")
+
+        // Update Tab Highlight
+        val tabMap = mapOf(
+            "All" to tabFilterAll,
+            "Missed" to tabFilterMissed,
+            "Dialed" to tabFilterDialed,
+            "Received" to tabFilterReceived
+        )
+        for ((key, btn) in tabMap) {
+            if (key == filter) {
+                btn.setBackgroundColor(Color.parseColor("#38BDF8"))
+                btn.setTextColor(Color.parseColor("#0F172A"))
+            } else {
+                btn.setBackgroundColor(Color.parseColor("#1E293B"))
+                btn.setTextColor(Color.WHITE)
+            }
+        }
+
+        var missed = 0
+        var dialed = 0
+        var received = 0
+        for (i in 0 until jsonArray.length()) {
+            when (jsonArray.getJSONObject(i).optString("type")) {
+                "Missed" -> missed++
+                "Dialed", "Outgoing" -> dialed++
+                "Received", "Incoming" -> received++
+            }
+        }
+
+        tvChartLegend.text = "❌ Missed: $missed   |   📤 Dialed: $dialed   |   📥 Received: $received"
+        (barMissed.layoutParams as LinearLayout.LayoutParams).weight = maxOf(missed.toFloat(), 0.2f)
+        (barDialed.layoutParams as LinearLayout.LayoutParams).weight = maxOf(dialed.toFloat(), 0.2f)
+        (barReceived.layoutParams as LinearLayout.LayoutParams).weight = maxOf(received.toFloat(), 0.2f)
+        barMissed.requestLayout()
+
+        layoutHistoryTableRows.removeAllViews()
+        var count = 0
+
+        for (i in 0 until jsonArray.length()) {
+            val obj = jsonArray.getJSONObject(i)
+            val rawType = obj.optString("type", "Dialed")
+            val normType = when (rawType) {
+                "Outgoing" -> "Dialed"
+                "Incoming" -> "Received"
+                else -> rawType
+            }
+            if (filter != "All" && normType != filter) continue
+            count++
+
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(16, 18, 16, 18)
+                setBackgroundColor(if (count % 2 == 0) Color.parseColor("#260F172A") else Color.parseColor("#14FFFFFF"))
+            }
+
+            val (badge, badgeColor) = when (normType) {
+                "Missed" -> "❌ Miss" to "#FCA5A5"
+                "Received" -> "📥 Recv" to "#6EE7B7"
+                else -> "📤 Dial" to "#7DD3FC"
+            }
+
+            val num = obj.optString("number", "")
+            val name = obj.optString("name", num)
+            val line = obj.optString("line", "")
+            val dur = obj.optString("duration", "00:00")
+            val time = obj.optString("time", "")
+
+            val callerDisplay = buildString {
+                append(if (name != num) "$name ($num)" else num)
+                if (line.isNotEmpty()) append("\n📡 $line")
+            }
+
+            val cells = listOf(
+                Triple(badge, 0.85f, badgeColor),
+                Triple(callerDisplay, 1.6f, "#FFFFFF"),
+                Triple(dur, 0.8f, "#FDE047"),
+                Triple(time, 1.25f, "#E0F2FE")
+            )
+
+            for ((textStr, weight, colorHex) in cells) {
+                val tv = TextView(this).apply {
+                    text = textStr
+                    setTextColor(Color.parseColor(colorHex))
+                    textSize = 11f
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
+                }
+                row.addView(tv)
+            }
+
+            row.setOnClickListener {
+                etDialNumber.setText(num)
+                switchMainTab("KEYPAD")
+                initiateOutgoingCallFlow(num)
+            }
+
+            layoutHistoryTableRows.addView(row)
+        }
+
+        if (count == 0) {
+            val emptyTv = TextView(this).apply {
+                text = "No $filter calls recorded yet."
+                setTextColor(Color.parseColor("#E0F2FE"))
+                gravity = Gravity.CENTER
+                setPadding(16, 40, 16, 40)
+            }
+            layoutHistoryTableRows.addView(emptyTv)
+        }
+    }
+
+    // --- Settings Tab: Default Call Mode & Account Edit/Rename/Delete ---
+    private fun setupDefaultCallModeSpinner() {
+        val accounts = getSavedAccounts()
+        val options = mutableListOf("❓ Ask Every Time (Choose SIP)")
+        for (i in 0 until accounts.length()) {
+            val obj = accounts.getJSONObject(i)
+            options.add("⭐ Default: ${obj.optString("label")} (${obj.getString("username")})")
+        }
+
+        spinnerDefaultCallAccount.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
+
+        val prefMode = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
+            .getString("default_call_mode", "ASK") ?: "ASK"
+        val selIndex = if (prefMode == "ASK") 0 else ((prefMode.toIntOrNull() ?: 0) + 1).coerceIn(0, options.size - 1)
+        spinnerDefaultCallAccount.setSelection(selIndex, false)
+
+        spinnerDefaultCallAccount.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val modeVal = if (position == 0) "ASK" else (position - 1).toString()
+                getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
+                    .edit().putString("default_call_mode", modeVal).apply()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+    }
+
+    private fun renderSettingsAccountsList() {
+        layoutSavedAccountsContainer.removeAllViews()
+        val accounts = getSavedAccounts()
+
+        if (accounts.length() == 0) {
+            val tv = TextView(this).apply {
+                text = "No accounts added yet. Add one below."
+                setTextColor(Color.parseColor("#E0F2FE"))
+                textSize = 12f
+            }
+            layoutSavedAccountsContainer.addView(tv)
+            return
+        }
+
+        for (i in 0 until accounts.length()) {
+            val obj = accounts.getJSONObject(i)
+            val label = obj.optString("label", "SIP")
+            val user = obj.getString("username")
+            val domain = obj.getString("domain")
+            val tr = obj.optString("transport", "UDP")
+            val key = "$user@$domain"
+            val ping = accountPingMap[key] ?: "--"
+            val st = accountStateMap[key] ?: "WAIT"
+            val dot = if (st == "OK") "🟢" else "🟡"
+
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setBackgroundResource(R.drawable.bg_ai_pill)
+                setPadding(24, 14, 20, 14)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { setMargins(0, 0, 0, 10) }
+            }
+
+            val infoTv = TextView(this).apply {
+                text = "$dot $label ($user)\n🌐 $domain ($tr) • ⚡$ping"
+                setTextColor(Color.WHITE)
+                textSize = 12f
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+
+            val btnEdit = Button(this).apply {
+                text = "✏️"
+                textSize = 13f
+                setBackgroundColor(Color.TRANSPARENT)
+                layoutParams = LinearLayout.LayoutParams(95, 95)
+                setOnClickListener {
+                    editingAccountIndex = i
+                    tvFormTitle.text = "✏️ Edit Account: $label"
+                    etAccountLabel.setText(label)
+                    etUsername.setText(user)
+                    etPassword.setText(obj.getString("password"))
+                    etDomain.setText(domain)
+                    spinnerTransport.setSelection(when (tr) { "TCP" -> 1; "TLS" -> 2; else -> 0 })
+                    btnSaveAccount.text = "✅ Update Account"
+                    btnCancelEdit.visibility = View.VISIBLE
+                }
+            }
+
+            val btnDelete = Button(this).apply {
+                text = "🗑️"
+                textSize = 13f
+                setBackgroundColor(Color.TRANSPARENT)
+                layoutParams = LinearLayout.LayoutParams(95, 95)
+                setOnClickListener {
+                    val newArr = JSONArray()
+                    for (j in 0 until accounts.length()) {
+                        if (j != i) newArr.put(accounts.getJSONObject(j))
+                    }
+                    saveAccountsList(newArr)
+                    registerAllSavedAccountsSimultaneously()
+                    setupDefaultCallModeSpinner()
+                    renderSettingsAccountsList()
+                    Toast.makeText(this@MainActivity, "Deleted $label", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            row.addView(infoTv)
+            row.addView(btnEdit)
+            row.addView(btnDelete)
+            layoutSavedAccountsContainer.addView(row)
+        }
+    }
+
+    private fun resetAccountForm() {
+        editingAccountIndex = -1
+        tvFormTitle.text = "➕ Add New SIP Account"
+        etAccountLabel.setText("")
+        etUsername.setText("")
+        etPassword.setText("")
+        etDomain.setText("")
+        btnSaveAccount.text = "💾 Save & Register"
+        btnCancelEdit.visibility = View.GONE
+    }
+
+    // --- In-Call DTMF Pad Setup ---
+    private fun setupInCallDtmfPad() {
+        val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#")
+        for (k in keys) {
+            val b = Button(this).apply {
+                text = k
+                setTextColor(Color.WHITE)
+                textSize = 15f
+                setBackgroundResource(R.drawable.bg_ai_pill)
+                layoutParams = GridLayout.LayoutParams().apply {
+                    width = 135
+                    height = 95
+                    setMargins(8, 6, 8, 6)
+                }
+                setOnClickListener {
+                    it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    currentCall?.sendDtmf(k[0])
+                    tvDtmfEntered.append(k)
+                }
+            }
+            gridInCallDtmf.addView(b)
+        }
+    }
+
+    // --- Ringtone & Vibration ---
+    private fun startIncomingRingtone() {
+        try {
+            stopIncomingRingtone()
+            val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            incomingRingtone = RingtoneManager.getRingtone(applicationContext, uri)?.apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) isLooping = true
+                audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                play()
+            }
+
+            val pattern = longArrayOf(0, 700, 600)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager)
+                    .defaultVibrator.vibrate(VibrationEffect.createWaveform(pattern, 0))
+            } else {
+                @Suppress("DEPRECATION")
+                val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    v.vibrate(VibrationEffect.createWaveform(pattern, 0))
+                } else {
+                    @Suppress("DEPRECATION")
+                    v.vibrate(pattern, 0)
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun stopIncomingRingtone() {
+        try {
+            if (incomingRingtone?.isPlaying == true) incomingRingtone?.stop()
+        } catch (_: Exception) {}
+        incomingRingtone = null
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator.cancel()
+            } else {
+                @Suppress("DEPRECATION")
+                (getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).cancel()
+            }
+        } catch (_: Exception) {}
+    }
+
+    // --- Network Telemetry ---
     private fun registerNetworkMonitor() {
         try {
             val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val request = NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .build()
-            cm.registerNetworkCallback(request, networkCallback)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+            cm.registerNetworkCallback(
+                NetworkRequest.Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build(),
+                networkCallback
+            )
+        } catch (_: Exception) {}
     }
 
     private fun updateNetworkTypeLabel(caps: NetworkCapabilities?) {
@@ -457,10 +1241,6 @@ class MainActivity : AppCompatActivity() {
                 tvNetworkType.text = "📡 Mobile Data"
                 tvNetworkType.setTextColor(0xFFFDE047.toInt())
             }
-            caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
-                tvNetworkType.text = "🔌 Ethernet"
-                tvNetworkType.setTextColor(0xFF7DD3FC.toInt())
-            }
             else -> {
                 tvNetworkType.text = "🌐 Online"
                 tvNetworkType.setTextColor(0xFFFFFFFF.toInt())
@@ -470,8 +1250,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateNetworkStatusAndFetchIsp() {
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val activeNet = cm.activeNetwork
-        val caps = cm.getNetworkCapabilities(activeNet)
+        val caps = cm.getNetworkCapabilities(cm.activeNetwork)
         updateNetworkTypeLabel(caps)
 
         if (caps == null) {
@@ -487,30 +1266,23 @@ class MainActivity : AppCompatActivity() {
             var ipResult = "Unavailable"
             var ispResult = "Unknown ISP"
             try {
-                val url = URL("http://ip-api.com/json/?fields=status,query,isp,org")
-                val conn = url.openConnection() as HttpURLConnection
+                val conn = URL("http://ip-api.com/json/?fields=status,query,isp,org").openConnection() as HttpURLConnection
                 conn.connectTimeout = 4000
                 conn.readTimeout = 4000
-                val response = conn.inputStream.bufferedReader().use { it.readText() }
-                val json = JSONObject(response)
+                val json = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
                 if (json.optString("status") == "success") {
                     ipResult = json.optString("query", "Unknown")
-                    val isp = json.optString("isp", "")
-                    val org = json.optString("org", "")
-                    ispResult = if (isp.isNotEmpty()) isp else org
+                    ispResult = json.optString("isp", "").ifEmpty { json.optString("org", "Unknown ISP") }
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 try {
-                    val url2 = URL("https://ipwho.is/")
-                    val conn2 = url2.openConnection() as HttpURLConnection
+                    val conn2 = URL("https://ipwho.is/").openConnection() as HttpURLConnection
                     conn2.connectTimeout = 4000
                     conn2.readTimeout = 4000
-                    val response2 = conn2.inputStream.bufferedReader().use { it.readText() }
-                    val json2 = JSONObject(response2)
+                    val json2 = JSONObject(conn2.inputStream.bufferedReader().use { it.readText() })
                     if (json2.optBoolean("success", false)) {
                         ipResult = json2.optString("ip", "Unknown")
-                        val connObj = json2.optJSONObject("connection")
-                        ispResult = connObj?.optString("isp", "Unknown ISP") ?: "Unknown ISP"
+                        ispResult = json2.optJSONObject("connection")?.optString("isp", "Unknown ISP") ?: "Unknown ISP"
                     }
                 } catch (_: Exception) {}
             }
@@ -522,387 +1294,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- Multi-Account Management ---
-    private fun getSavedAccounts(): JSONArray {
-        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
-        val raw = prefs.getString("multi_accounts", "[]") ?: "[]"
-        return JSONArray(raw)
-    }
-
-    private fun saveAccountsList(array: JSONArray) {
-        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
-        prefs.edit().putString("multi_accounts", array.toString()).apply()
-        btnSavedAccountsList.text = "📋 Accounts (${array.length()})"
-    }
-
-    private fun addOrUpdateAccount(label: String, user: String, pass: String, domain: String, transport: String) {
-        val accounts = getSavedAccounts()
-        val updated = JSONArray()
-        var replaced = false
-
-        for (i in 0 until accounts.length()) {
-            val obj = accounts.getJSONObject(i)
-            if (obj.getString("username") == user && obj.getString("domain") == domain) {
-                val newObj = JSONObject().apply {
-                    put("label", label)
-                    put("username", user)
-                    put("password", pass)
-                    put("domain", domain)
-                    put("transport", transport)
-                }
-                updated.put(newObj)
-                replaced = true
-            } else {
-                updated.put(obj)
-            }
-        }
-
-        if (!replaced) {
-            val newObj = JSONObject().apply {
-                put("label", label)
-                put("username", user)
-                put("password", pass)
-                put("domain", domain)
-                put("transport", transport)
-            }
-            updated.put(newObj)
-        }
-
-        saveAccountsList(updated)
-        setActiveAccountIndex(updated.length() - 1)
-    }
-
-    private fun setActiveAccountIndex(index: Int) {
-        getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
-            .edit().putInt("active_account_idx", index).apply()
-    }
-
-    private fun loadSavedAccountsAndAutoLogin() {
-        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
-        val accounts = getSavedAccounts()
-
-        if (accounts.length() == 0) {
-            val oldUser = prefs.getString("username", "") ?: ""
-            val oldPass = prefs.getString("password", "") ?: ""
-            val oldDomain = prefs.getString("domain", "") ?: ""
-            val oldTransport = prefs.getString("transport", "UDP") ?: "UDP"
-            if (oldUser.isNotEmpty() && oldPass.isNotEmpty() && oldDomain.isNotEmpty()) {
-                addOrUpdateAccount("Primary", oldUser, oldPass, oldDomain, oldTransport)
-            }
-        }
-
-        val finalAccounts = getSavedAccounts()
-        btnSavedAccountsList.text = "📋 Accounts (${finalAccounts.length()})"
-
-        if (finalAccounts.length() > 0) {
-            var idx = prefs.getInt("active_account_idx", 0)
-            if (idx < 0 || idx >= finalAccounts.length()) idx = 0
-            activateAccountFromJson(finalAccounts.getJSONObject(idx), idx)
-        } else {
-            layoutLoginCard.visibility = View.VISIBLE
-        }
-    }
-
-    private fun activateAccountFromJson(acc: JSONObject, index: Int) {
-        val label = acc.optString("label", "Account ${index + 1}")
-        val user = acc.getString("username")
-        val pass = acc.getString("password")
-        val domain = acc.getString("domain")
-        val transport = acc.optString("transport", "UDP")
-
-        activeLabel = label
-        activeDomain = domain
-        setActiveAccountIndex(index)
-
-        etAccountLabel.setText(label)
-        etUsername.setText(user)
-        etPassword.setText(pass)
-        etDomain.setText(domain)
-        spinnerTransport.setSelection(
-            when (transport) {
-                "TCP" -> 1
-                "TLS" -> 2
-                else -> 0
-            }
-        )
-
-        registerSipAccount(user, pass, domain, transport)
-    }
-
-    private fun showMultiAccountSwitcherDialog() {
-        val accounts = getSavedAccounts()
-        if (accounts.length() == 0) {
-            layoutLoginCard.visibility = View.VISIBLE
-            Toast.makeText(this, "No saved accounts. Add one below!", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val activeIdx = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE).getInt("active_account_idx", 0)
-        val items = Array(accounts.length()) { i ->
-            val obj = accounts.getJSONObject(i)
-            val lbl = obj.optString("label", "Account")
-            val usr = obj.getString("username")
-            val dom = obj.getString("domain")
-            val tr = obj.optString("transport", "UDP")
-            val check = if (i == activeIdx) "✅ " else "⚪ "
-            "$check$lbl — $usr@$dom ($tr)"
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("🤖 Switch SIP Account")
-            .setItems(items) { _, which ->
-                activateAccountFromJson(accounts.getJSONObject(which), which)
-                Toast.makeText(this, "Switched to ${accounts.getJSONObject(which).optString("label")}", Toast.LENGTH_SHORT).show()
-            }
-            .setPositiveButton("➕ Add New") { _, _ ->
-                etAccountLabel.setText("")
-                etUsername.setText("")
-                etPassword.setText("")
-                layoutLoginCard.visibility = View.VISIBLE
-            }
-            .setNeutralButton("🗑️ Delete Current") { _, _ ->
-                if (activeIdx in 0 until accounts.length()) {
-                    val newArr = JSONArray()
-                    for (i in 0 until accounts.length()) {
-                        if (i != activeIdx) newArr.put(accounts.getJSONObject(i))
-                    }
-                    saveAccountsList(newArr)
-                    if (newArr.length() > 0) {
-                        activateAccountFromJson(newArr.getJSONObject(0), 0)
-                    } else {
-                        core.clearAccounts()
-                        core.clearAllAuthInfo()
-                        activeDomain = ""
-                        tvStatus.text = "● No Account (Tap) ▾"
-                        layoutLoginCard.visibility = View.VISIBLE
-                    }
-                }
-            }
-            .setNegativeButton("Close", null)
-            .show()
-    }
-
-    // --- Tabbed Table Call History (All / Missed / Dialed / Received) ---
-    private fun saveCallToHistory(number: String, type: String, duration: String) {
-        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
-        val historyJson = prefs.getString("call_history", "[]") ?: "[]"
-        val jsonArray = JSONArray(historyJson)
-
-        val timeStr = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date())
-        val entry = JSONObject().apply {
-            put("number", number)
-            put("type", type)
-            put("duration", duration)
-            put("time", timeStr)
-        }
-
-        val updatedArray = JSONArray()
-        updatedArray.put(entry)
-        for (i in 0 until minOf(jsonArray.length(), 49)) {
-            updatedArray.put(jsonArray.getJSONObject(i))
-        }
-
-        prefs.edit().putString("call_history", updatedArray.toString()).apply()
-    }
-
-    private fun showRecentCallsDialog() {
-        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
-        val historyJson = prefs.getString("call_history", "[]") ?: "[]"
-        val jsonArray = JSONArray(historyJson)
-
-        val rootLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(24, 20, 24, 12)
-            setBackgroundColor(Color.parseColor("#0F172A"))
-        }
-
-        // Summary Stats Chart Bar (Missed / Dialed / Received Counts)
-        var missedCount = 0
-        var dialedCount = 0
-        var receivedCount = 0
-        for (i in 0 until jsonArray.length()) {
-            when (jsonArray.getJSONObject(i).optString("type")) {
-                "Missed" -> missedCount++
-                "Dialed", "Outgoing" -> dialedCount++
-                "Received", "Incoming" -> receivedCount++
-            }
-        }
-
-        val chartSummary = TextView(this).apply {
-            text = "📊 Summary:   ❌ Missed: $missedCount   |   📤 Dialed: $dialedCount   |   📥 Received: $receivedCount"
-            setTextColor(Color.parseColor("#38BDF8"))
-            textSize = 12f
-            setTypeface(null, Typeface.BOLD)
-            gravity = Gravity.CENTER
-            setPadding(12, 14, 12, 14)
-            setBackgroundColor(Color.parseColor("#1E293B"))
-        }
-        rootLayout.addView(chartSummary)
-
-        // Filter Tabs Row
-        val tabRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            setPadding(0, 14, 0, 14)
-        }
-
-        val tabs = listOf("All", "Missed", "Dialed", "Received")
-        val tabButtons = mutableListOf<Button>()
-        val tableContainer = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-        }
-
-        var dialogRef: AlertDialog? = null
-
-        fun renderTable(filter: String) {
-            tableContainer.removeAllViews()
-
-            // Highlight active tab
-            for (b in tabButtons) {
-                if (b.tag == filter) {
-                    b.setBackgroundColor(Color.parseColor("#38BDF8"))
-                    b.setTextColor(Color.parseColor("#0F172A"))
-                } else {
-                    b.setBackgroundColor(Color.parseColor("#1E293B"))
-                    b.setTextColor(Color.WHITE)
-                }
-            }
-
-            // Table Header Row
-            val headerRow = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                setBackgroundColor(Color.parseColor("#334155"))
-                setPadding(14, 12, 14, 12)
-            }
-            val headers = listOf("Type" to 0.9f, "Number" to 1.6f, "Time" to 0.9f, "Date" to 1.4f)
-            for ((title, weight) in headers) {
-                val tv = TextView(this).apply {
-                    text = title
-                    setTextColor(Color.parseColor("#7DD3FC"))
-                    textSize = 12f
-                    setTypeface(null, Typeface.BOLD)
-                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
-                }
-                headerRow.addView(tv)
-            }
-            tableContainer.addView(headerRow)
-
-            var matchCount = 0
-            for (i in 0 until jsonArray.length()) {
-                val obj = jsonArray.getJSONObject(i)
-                val rawType = obj.optString("type", "Dialed")
-                val normalizedType = when (rawType) {
-                    "Outgoing" -> "Dialed"
-                    "Incoming" -> "Received"
-                    else -> rawType
-                }
-
-                if (filter != "All" && normalizedType != filter) continue
-                matchCount++
-
-                val row = LinearLayout(this).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    setPadding(14, 14, 14, 14)
-                    setBackgroundColor(if (matchCount % 2 == 0) Color.parseColor("#1E293B") else Color.parseColor("#0F172A"))
-                }
-
-                val (badge, badgeColor) = when (normalizedType) {
-                    "Missed" -> "❌ Miss" to "#FCA5A5"
-                    "Received" -> "📥 Recv" to "#6EE7B7"
-                    else -> "📤 Dial" to "#93C5FD"
-                }
-
-                val num = obj.optString("number", "")
-                val dur = obj.optString("duration", "00:00")
-                val time = obj.optString("time", "")
-
-                val cells = listOf(
-                    Triple(badge, 0.9f, badgeColor),
-                    Triple(num, 1.6f, "#FFFFFF"),
-                    Triple(dur, 0.9f, "#FDE047"),
-                    Triple(time, 1.4f, "#CBD5E1")
-                )
-
-                for ((cellText, weight, hexColor) in cells) {
-                    val tv = TextView(this).apply {
-                        text = cellText
-                        setTextColor(Color.parseColor(hexColor))
-                        textSize = 11.5f
-                        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
-                    }
-                    row.addView(tv)
-                }
-
-                row.setOnClickListener {
-                    dialogRef?.dismiss()
-                    etDialNumber.setText(num)
-                    makeCall(num)
-                }
-
-                tableContainer.addView(row)
-            }
-
-            if (matchCount == 0) {
-                val emptyTv = TextView(this).apply {
-                    text = "No $filter calls found."
-                    setTextColor(Color.parseColor("#94A3B8"))
-                    gravity = Gravity.CENTER
-                    setPadding(16, 36, 16, 36)
-                }
-                tableContainer.addView(emptyTv)
-            }
-        }
-
-        for (tabName in tabs) {
-            val btn = Button(this).apply {
-                text = tabName
-                tag = tabName
-                textSize = 11f
-                isAllCaps = false
-                layoutParams = LinearLayout.LayoutParams(0, 96, 1f).apply {
-                    setMargins(4, 0, 4, 0)
-                }
-                setOnClickListener { renderTable(tabName) }
-            }
-            tabButtons.add(btn)
-            tabRow.addView(btn)
-        }
-
-        rootLayout.addView(tabRow)
-
-        val scrollView = ScrollView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                650
-            )
-            addView(tableContainer)
-        }
-        rootLayout.addView(scrollView)
-
-        renderTable("All")
-
-        dialogRef = AlertDialog.Builder(this)
-            .setTitle("📊 Call History Table (Tap Row to Call)")
-            .setView(rootLayout)
-            .setNeutralButton("🗑️ Clear") { _, _ ->
-                prefs.edit().remove("call_history").apply()
-                Toast.makeText(this, "Call history cleared", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Close", null)
-            .show()
-    }
-
-    // --- Recordings & Media ---
+    // --- Recordings & Helpers ---
     private fun getRecordingsDirectory(): File {
         val publicMusic = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
         val dir = File(publicMusic, "SIP_Recordings")
-        if (!dir.exists()) {
-            val created = dir.mkdirs()
-            if (!created) {
-                val fallback = File(getExternalFilesDir(null), "Recordings")
-                if (!fallback.exists()) fallback.mkdirs()
-                return fallback
-            }
+        if (!dir.exists() && !dir.mkdirs()) {
+            val fallback = File(getExternalFilesDir(null), "Recordings")
+            if (!fallback.exists()) fallback.mkdirs()
+            return fallback
         }
         return dir
     }
@@ -915,6 +1314,45 @@ class MainActivity : AppCompatActivity() {
         return file.absolutePath
     }
 
+    private fun showRecordingsDialog() {
+        val dir = getRecordingsDirectory()
+        val files = dir.listFiles { file -> file.extension.equals("wav", ignoreCase = true) && file.length() > 44 }
+            ?.sortedByDescending { it.lastModified() }
+
+        if (files.isNullOrEmpty()) {
+            Toast.makeText(this, "No recordings found in Music/SIP_Recordings", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val names = Array(files.size) { i -> "🎵 ${files[i].name} (${files[i].length() / 1024} KB)" }
+
+        AlertDialog.Builder(this)
+            .setTitle("🎧 Saved Call Recordings (Tap to Play)")
+            .setItems(names) { _, which ->
+                try {
+                    stopMediaPlayer()
+                    mediaPlayer = MediaPlayer().apply {
+                        setDataSource(files[which].absolutePath)
+                        prepare()
+                        start()
+                    }
+                    Toast.makeText(this, "Playing: ${files[which].name}", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Cannot play: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Close") { _, _ -> stopMediaPlayer() }
+            .show()
+    }
+
+    private fun stopMediaPlayer() {
+        try {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+        } catch (_: Exception) {}
+        mediaPlayer = null
+    }
+
     private fun startLivePing() {
         if (!isPinging) {
             isPinging = true
@@ -925,53 +1363,6 @@ class MainActivity : AppCompatActivity() {
     private fun stopLivePing() {
         isPinging = false
         pingHandler.removeCallbacks(pingRunnable)
-        tvLivePing.text = "⚡ -- ms"
-    }
-
-    private fun measureServerPing() {
-        val rawDomain = activeDomain.ifEmpty { etDomain.text.toString().trim() }
-        if (rawDomain.isEmpty()) return
-
-        val parts = rawDomain.split(":")
-        val host = parts[0]
-        val port = if (parts.size > 1) parts[1].toIntOrNull() ?: 5060 else 5060
-
-        thread {
-            var pingMs = -1L
-            try {
-                val start = SystemClock.elapsedRealtime()
-                val socket = Socket()
-                socket.connect(InetSocketAddress(host, port), 2000)
-                pingMs = SystemClock.elapsedRealtime() - start
-                socket.close()
-            } catch (e: Exception) {
-                try {
-                    val start = SystemClock.elapsedRealtime()
-                    val reachable = java.net.InetAddress.getByName(host).isReachable(2000)
-                    if (reachable) {
-                        pingMs = SystemClock.elapsedRealtime() - start
-                    }
-                } catch (_: Exception) {}
-            }
-
-            runOnUiThread {
-                if (pingMs >= 0) {
-                    val color = when {
-                        pingMs < 80 -> 0xFF6EE7B7.toInt()
-                        pingMs < 180 -> 0xFFFDE047.toInt()
-                        else -> 0xFFFCA5A5.toInt()
-                    }
-                    tvLivePing.text = "⚡ ${pingMs} ms"
-                    tvLivePing.setTextColor(color)
-                } else if (currentCall != null && lastDelay > 0f) {
-                    tvLivePing.text = "⚡ ${lastDelay.toInt()} ms"
-                    tvLivePing.setTextColor(0xFF6EE7B7.toInt())
-                } else {
-                    tvLivePing.text = "⚡ Online"
-                    tvLivePing.setTextColor(0xFFBAE6FD.toInt())
-                }
-            }
-        }
     }
 
     private fun startCallTimer() {
@@ -988,29 +1379,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupProximitySensor() {
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        if (powerManager.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK)) {
-            proximityWakeLock = powerManager.newWakeLock(
-                PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK,
-                "BasicSipDialer::ProximityLock"
-            )
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (pm.isWakeLockLevelSupported(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK)) {
+            proximityWakeLock = pm.newWakeLock(PowerManager.PROXIMITY_SCREEN_OFF_WAKE_LOCK, "AISipDialer::Proximity")
         }
     }
 
     private fun enableProximitySensor(enable: Boolean) {
         try {
-            if (enable) {
-                if (proximityWakeLock?.isHeld == false) {
-                    proximityWakeLock?.acquire(60 * 60 * 1000L)
-                }
-            } else {
-                if (proximityWakeLock?.isHeld == true) {
-                    proximityWakeLock?.release()
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+            if (enable && proximityWakeLock?.isHeld == false) proximityWakeLock?.acquire(60 * 60 * 1000L)
+            else if (!enable && proximityWakeLock?.isHeld == true) proximityWakeLock?.release()
+        } catch (_: Exception) {}
     }
 
     private fun formatKeyLabel(mainDigit: String, subLetters: String): SpannableString {
@@ -1025,18 +1404,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupDialpad() {
         val dialConfig = listOf(
-            Triple(R.id.btn1, "1", ""),
-            Triple(R.id.btn2, "2", "ABC"),
-            Triple(R.id.btn3, "3", "DEF"),
-            Triple(R.id.btn4, "4", "GHI"),
-            Triple(R.id.btn5, "5", "JKL"),
-            Triple(R.id.btn6, "6", "MNO"),
-            Triple(R.id.btn7, "7", "PQRS"),
-            Triple(R.id.btn8, "8", "TUV"),
-            Triple(R.id.btn9, "9", "WXYZ"),
-            Triple(R.id.btnStar, "*", ""),
-            Triple(R.id.btn0, "0", "+"),
-            Triple(R.id.btnHash, "#", "")
+            Triple(R.id.btn1, "1", ""), Triple(R.id.btn2, "2", "ABC"), Triple(R.id.btn3, "3", "DEF"),
+            Triple(R.id.btn4, "4", "GHI"), Triple(R.id.btn5, "5", "JKL"), Triple(R.id.btn6, "6", "MNO"),
+            Triple(R.id.btn7, "7", "PQRS"), Triple(R.id.btn8, "8", "TUV"), Triple(R.id.btn9, "9", "WXYZ"),
+            Triple(R.id.btnStar, "*", ""), Triple(R.id.btn0, "0", "+"), Triple(R.id.btnHash, "#", "")
         )
 
         for ((id, digit, letters) in dialConfig) {
@@ -1045,7 +1416,6 @@ class MainActivity : AppCompatActivity() {
             btn.setOnClickListener { view ->
                 view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                 etDialNumber.append(digit)
-                currentCall?.sendDtmf(digit[0])
             }
         }
 
@@ -1068,162 +1438,84 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showRecordingsDialog() {
-        val dir = getRecordingsDirectory()
-        val files = dir.listFiles { file -> file.extension.equals("wav", ignoreCase = true) && file.length() > 44 }
-            ?.sortedByDescending { it.lastModified() }
-
-        if (files.isNullOrEmpty()) {
-            Toast.makeText(this, "No recordings found in Music/SIP_Recordings", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val names = Array(files.size) { i ->
-            val kb = files[i].length() / 1024
-            "🎵 ${files[i].name} (${kb} KB)"
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("🎧 Saved Call Recordings (Tap to Play)")
-            .setItems(names) { _, which ->
-                playRecordingFile(files[which])
-            }
-            .setNegativeButton("Close") { _, _ ->
-                stopMediaPlayer()
-            }
-            .show()
-    }
-
-    private fun playRecordingFile(file: File) {
-        try {
-            stopMediaPlayer()
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(file.absolutePath)
-                prepare()
-                start()
-            }
-            Toast.makeText(this, "Playing: ${file.name}", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Toast.makeText(this, "Cannot play file: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun stopMediaPlayer() {
-        try {
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
-        } catch (_: Exception) {}
-        mediaPlayer = null
-    }
-
     private fun requestAppPermissions() {
-        val needed = arrayOf(
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.READ_CONTACTS
-        )
-        permissionLauncher.launch(needed)
+        permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_CONTACTS))
     }
 
     private fun initLinphoneCore() {
         val factory = Factory.instance()
-        factory.setDebugMode(false, "BasicSipDialer")
+        factory.setDebugMode(false, "AISipDialer")
         core = factory.createCore(null, null, this)
         core.addListener(coreListener)
         core.start()
     }
 
     private fun setupListeners() {
-        tvStatus.setOnClickListener {
-            showMultiAccountSwitcherDialog()
-        }
-
-        btnSavedAccountsList.setOnClickListener {
-            showMultiAccountSwitcherDialog()
-        }
+        btnNavKeypad.setOnClickListener { switchMainTab("KEYPAD") }
+        btnNavRecents.setOnClickListener { switchMainTab("RECENTS") }
+        btnNavContacts.setOnClickListener { switchMainTab("CONTACTS") }
+        btnNavSettings.setOnClickListener { switchMainTab("SETTINGS") }
 
         btnRefreshNet.setOnClickListener {
             updateNetworkStatusAndFetchIsp()
-            measureServerPing()
-            Toast.makeText(this, "Refreshing Network & IP...", Toast.LENGTH_SHORT).show()
+            measureAllAccountsPing()
+            Toast.makeText(this, "Refreshing Network & All SIP Pings...", Toast.LENGTH_SHORT).show()
         }
 
-        btnNavKeypad.setOnClickListener {
-            layoutLoginCard.visibility = View.GONE
-        }
+        btnRecordingsList.setOnClickListener { showRecordingsDialog() }
+        btnMakeCall.setOnClickListener { initiateOutgoingCallFlow(etDialNumber.text.toString()) }
+        btnEndCall.setOnClickListener { currentCall?.terminate() }
 
-        btnRecentCalls.setOnClickListener {
-            showRecentCallsDialog()
-        }
-
-        btnRecordingsList.setOnClickListener {
-            showRecordingsDialog()
-        }
-
-        btnToggleAccount.setOnClickListener {
-            layoutLoginCard.visibility =
-                if (layoutLoginCard.visibility == View.VISIBLE) View.GONE else View.VISIBLE
-        }
-
-        btnLogin.setOnClickListener {
-            val labelInput = etAccountLabel.text.toString().trim()
-            val user = etUsername.text.toString().trim()
-            val pass = etPassword.text.toString().trim()
-            val domain = etDomain.text.toString().trim()
-            val transportStr = spinnerTransport.selectedItem.toString()
-
-            if (user.isEmpty() || pass.isEmpty() || domain.isEmpty()) {
-                Toast.makeText(this, "Please fill Username, Password & Domain", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val finalLabel = labelInput.ifEmpty { "Account ${getSavedAccounts().length() + 1}" }
-            activeLabel = finalLabel
-            activeDomain = domain
-
-            addOrUpdateAccount(finalLabel, user, pass, domain, transportStr)
-            registerSipAccount(user, pass, domain, transportStr)
-        }
-
-        btnContacts.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-                val intent = Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI)
-                pickContactLauncher.launch(intent)
-            } else {
-                requestAppPermissions()
+        // Incoming Overlay Buttons
+        btnAnswerIncoming.setOnClickListener {
+            stopIncomingRingtone()
+            hideAnimatedIncomingOverlay()
+            currentCall?.let { call ->
+                val params = core.createCallParams(call)
+                params?.isAudioEnabled = true
+                params?.recordFile = prepareRecordFilePath("InCall")
+                call.acceptWithParams(params)
             }
         }
 
-        btnCallToggle.setOnClickListener {
-            if (currentCall != null) {
-                currentCall?.terminate()
-            } else {
-                val number = etDialNumber.text.toString().trim()
-                if (number.isEmpty()) {
-                    Toast.makeText(this, "Enter a number to call", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-                makeCall(number)
-            }
+        btnDeclineIncoming.setOnClickListener {
+            stopIncomingRingtone()
+            hideAnimatedIncomingOverlay()
+            currentCall?.decline(Reason.Declined)
         }
 
+        // In-Call Controls
         btnMute.setOnClickListener {
             core.isMicEnabled = !core.isMicEnabled
-            btnMute.text = if (core.isMicEnabled) "🔇 Mute" else "🎙️ Unmute"
+            btnMute.text = if (core.isMicEnabled) "🔇\nMute" else "🎙️\nUnmute"
+        }
+
+        btnHold.setOnClickListener {
+            val call = currentCall ?: return@setOnClickListener
+            if (!isOnHold) {
+                call.pause()
+                isOnHold = true
+                btnHold.text = "▶️\nResume"
+                btnHold.setBackgroundColor(0xFFD97706.toInt())
+            } else {
+                call.resume()
+                isOnHold = false
+                btnHold.text = "⏸️\nHold"
+                btnHold.setBackgroundResource(R.drawable.bg_ai_pill)
+            }
         }
 
         btnSpeaker.setOnClickListener {
             val currentDevice = core.outputAudioDevice
-            val devices = core.audioDevices
-            val speaker = devices.find { it.type == AudioDevice.Type.Speaker }
-            val earpiece = devices.find { it.type == AudioDevice.Type.Earpiece }
-
+            val speaker = core.audioDevices.find { it.type == AudioDevice.Type.Speaker }
+            val earpiece = core.audioDevices.find { it.type == AudioDevice.Type.Earpiece }
             if (currentDevice?.type == AudioDevice.Type.Speaker && earpiece != null) {
                 core.outputAudioDevice = earpiece
-                btnSpeaker.text = "🔊 Speaker"
+                btnSpeaker.text = "🔊\nSpeaker"
                 enableProximitySensor(true)
             } else if (speaker != null) {
                 core.outputAudioDevice = speaker
-                btnSpeaker.text = "📱 Earpiece"
+                btnSpeaker.text = "📱\nEarpiece"
                 enableProximitySensor(false)
             }
         }
@@ -1238,99 +1530,104 @@ class MainActivity : AppCompatActivity() {
                 try {
                     call.startRecording()
                     isRecording = true
-                    btnRecord.text = "⏹ Stop"
-                    btnRecord.setBackgroundColor(0xFFC9184A.toInt())
+                    btnRecord.text = "⏹\nStop"
+                    btnRecord.setBackgroundColor(0xFFDC2626.toInt())
                     lastSavedRecordFileName = File(currentRecordFilePath ?: "").name
                     Toast.makeText(this, "🔴 Recording started...", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     Toast.makeText(this, "Recording failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             } else {
-                try {
-                    call.stopRecording()
-                } catch (_: Exception) {}
+                try { call.stopRecording() } catch (_: Exception) {}
                 isRecording = false
-                btnRecord.text = "⏺ Record"
-                btnRecord.setBackgroundColor(0xFF1E293B.toInt())
+                btnRecord.text = "⏺\nRecord"
+                btnRecord.setBackgroundResource(R.drawable.bg_ai_pill)
                 Toast.makeText(this, "✅ Saved in Music/SIP_Recordings", Toast.LENGTH_SHORT).show()
             }
         }
-    }
 
-    private fun registerSipAccount(username: String, password: String, domain: String, transportStr: String) {
-        core.clearAccounts()
-        core.clearAllAuthInfo()
-
-        val transport = when (transportStr) {
-            "TCP" -> TransportType.Tcp
-            "TLS" -> TransportType.Tls
-            else -> TransportType.Udp
+        btnToggleInCallDtmf.setOnClickListener {
+            layoutInCallDtmf.visibility = if (layoutInCallDtmf.visibility == View.VISIBLE) View.GONE else View.VISIBLE
         }
 
-        val authInfo = Factory.instance().createAuthInfo(username, null, password, null, null, domain, null)
-        core.addAuthInfo(authInfo)
-
-        val accountParams = core.createAccountParams()
-        val identity = Factory.instance().createAddress("sip:$username@$domain")
-        accountParams.identityAddress = identity
-
-        val serverAddress = Factory.instance().createAddress("sip:$domain")
-        serverAddress?.transport = transport
-        accountParams.serverAddress = serverAddress
-        accountParams.isRegisterEnabled = true
-
-        val account = core.createAccount(accountParams)
-        core.addAccount(account)
-        core.defaultAccount = account
-    }
-
-    private fun makeCall(destination: String) {
-        val domain = activeDomain.ifEmpty { etDomain.text.toString().trim() }
-        if (domain.isEmpty()) {
-            Toast.makeText(this, "Please select or add a SIP account first!", Toast.LENGTH_SHORT).show()
-            return
+        btnInCallAddNote.setOnClickListener {
+            currentCall?.let { captureCallMetrics(it) }
+            Toast.makeText(
+                this,
+                "MOS: ${String.format(Locale.US, "%.2f", lastQualityRating)} | Codec: $lastCodec | Loss: ${String.format(Locale.US, "%.1f", lastPacketLoss)}%",
+                Toast.LENGTH_LONG
+            ).show()
         }
-        val sipUri = if (destination.startsWith("sip:")) destination else "sip:$destination@$domain"
-        val remoteAddress = Factory.instance().createAddress(sipUri) ?: return
 
-        val callParams = core.createCallParams(null) ?: return
-        callParams.isAudioEnabled = true
-        callParams.recordFile = prepareRecordFilePath("OutCall")
+        // Recents Filter Tabs
+        tabFilterAll.setOnClickListener { renderCallHistoryTable("All") }
+        tabFilterMissed.setOnClickListener { renderCallHistoryTable("Missed") }
+        tabFilterDialed.setOnClickListener { renderCallHistoryTable("Dialed") }
+        tabFilterReceived.setOnClickListener { renderCallHistoryTable("Received") }
 
-        lastQualityRating = 0f
-        lastPacketLoss = 0f
-        lastJitter = 0f
-        lastDelay = 0f
-        lastCodec = callParams.usedAudioPayloadType?.mimeType ?: "Default"
+        btnClearHistory.setOnClickListener {
+            getSharedPreferences("SipPrefs", Context.MODE_PRIVATE).edit().remove("call_history").apply()
+            renderCallHistoryTable(currentHistoryFilter)
+            Toast.makeText(this, "Call history cleared", Toast.LENGTH_SHORT).show()
+        }
 
-        core.inviteAddressWithParams(remoteAddress, callParams)
-    }
-
-    private fun showIncomingCallDialog(call: Call) {
-        incomingDialog?.dismiss()
-        val caller = call.remoteAddress.username ?: call.remoteAddress.asStringUriOnly()
-        incomingDialog = AlertDialog.Builder(this)
-            .setTitle("📲 Incoming SIP Call")
-            .setMessage("Caller: $caller")
-            .setPositiveButton("✅ Answer") { _, _ ->
-                stopIncomingRingtone()
-                val params = core.createCallParams(call)
-                params?.isAudioEnabled = true
-                params?.recordFile = prepareRecordFilePath("InCall")
-                call.acceptWithParams(params)
+        // Contacts Live Search
+        etSearchContact.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                renderContactsList(s?.toString() ?: "")
             }
-            .setNegativeButton("❌ Decline") { _, _ ->
-                stopIncomingRingtone()
-                call.decline(Reason.Declined)
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        // Settings Save / Update Account
+        btnSaveAccount.setOnClickListener {
+            val label = etAccountLabel.text.toString().trim().ifEmpty { "SIP ${getSavedAccounts().length() + 1}" }
+            val user = etUsername.text.toString().trim()
+            val pass = etPassword.text.toString().trim()
+            val domain = etDomain.text.toString().trim()
+            val tr = spinnerTransport.selectedItem.toString()
+
+            if (user.isEmpty() || pass.isEmpty() || domain.isEmpty()) {
+                Toast.makeText(this, "Please fill Username, Password & Domain", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
-            .setCancelable(false)
-            .show()
+
+            val accounts = getSavedAccounts()
+            val newEntry = JSONObject().apply {
+                put("label", label)
+                put("username", user)
+                put("password", pass)
+                put("domain", domain)
+                put("transport", tr)
+            }
+
+            val updated = JSONArray()
+            if (editingAccountIndex in 0 until accounts.length()) {
+                for (i in 0 until accounts.length()) {
+                    updated.put(if (i == editingAccountIndex) newEntry else accounts.getJSONObject(i))
+                }
+            } else {
+                for (i in 0 until accounts.length()) {
+                    updated.put(accounts.getJSONObject(i))
+                }
+                updated.put(newEntry)
+            }
+
+            saveAccountsList(updated)
+            resetAccountForm()
+            registerAllSavedAccountsSimultaneously()
+            setupDefaultCallModeSpinner()
+            renderSettingsAccountsList()
+            Toast.makeText(this, "✅ Account Saved & Registered!", Toast.LENGTH_SHORT).show()
+        }
+
+        btnCancelEdit.setOnClickListener { resetAccountForm() }
     }
 
     private fun captureCallMetrics(call: Call) {
         lastQualityRating = call.currentQuality
-        val stats = call.audioStats
-        if (stats != null) {
+        call.audioStats?.let { stats ->
             lastPacketLoss = stats.receiverLossRate
             lastJitter = stats.jitterBufferSizeMs
             lastDelay = stats.roundTripDelay * 1000f
@@ -1351,6 +1648,7 @@ class MainActivity : AppCompatActivity() {
 
         val summary = """
             ⏱️ Call Duration: $lastFormattedDuration
+            📡 SIP Line: ${activeCallLineLabel.ifEmpty { "Default" }}
             ────────────────────────
             $qualityEmoji Quality (MOS): ${String.format(Locale.US, "%.2f", lastQualityRating)} / 5.0 ($qualityLabel)
             📉 Packet Loss: ${String.format(Locale.US, "%.2f", lastPacketLoss)}%
@@ -1372,9 +1670,9 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         stopIncomingRingtone()
+        pulseAnimator?.cancel()
         try {
-            val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            cm.unregisterNetworkCallback(networkCallback)
+            (getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager).unregisterNetworkCallback(networkCallback)
         } catch (_: Exception) {}
         stopCallTimer()
         stopLivePing()

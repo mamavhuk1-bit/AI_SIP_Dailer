@@ -19,7 +19,7 @@
             android:paddingTop="10dp"
             android:paddingBottom="10dp">
 
-            <!-- AI HUD Telemetry Card: Account Switcher, Ping, Network, IP & ISP -->
+            <!-- Luminous AI HUD Telemetry Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -27,7 +27,7 @@
                 android:orientation="vertical"
                 android:padding="12dp">
 
-                <!-- Row 1: Multi-Account Switcher + Live Ping -->
+                <!-- Row 1: Multi-Account Switcher + Version + Live Ping -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -41,9 +41,18 @@
                         android:layout_weight="1"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="● No Account (Tap to Switch)"
-                        android:textColor="#00F5D4"
+                        android:text="● No Account (Tap) ▾"
+                        android:textColor="#FFFFFF"
                         android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:text="v1.2"
+                        android:textColor="#E0F2FE"
+                        android:textSize="10sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -54,7 +63,7 @@
                         android:paddingHorizontal="10dp"
                         android:paddingVertical="3dp"
                         android:text="⚡ -- ms"
-                        android:textColor="#00F5D4"
+                        android:textColor="#6EE7B7"
                         android:textSize="11sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -75,7 +84,7 @@
                         android:paddingHorizontal="9dp"
                         android:paddingVertical="2dp"
                         android:text="📡 Checking..."
-                        android:textColor="#E0AAFF"
+                        android:textColor="#FFFFFF"
                         android:textSize="11sp"
                         android:textStyle="bold" />
 
@@ -88,7 +97,7 @@
                         android:ellipsize="end"
                         android:maxLines="1"
                         android:text="🌐 IP: Detecting..."
-                        android:textColor="#CAF0F8"
+                        android:textColor="#F0F9FF"
                         android:textSize="11sp" />
 
                     <TextView
@@ -108,8 +117,8 @@
                     android:layout_marginTop="4dp"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:text="🏢 ISP: Detecting..."
-                    android:textColor="#90E0EF"
+                    android:text="ISP: Detecting..."
+                    android:textColor="#BAE6FD"
                     android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -136,7 +145,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="🤖 Add / Switch SIP Account"
-                        android:textColor="#00F5D4"
+                        android:textColor="#FFFFFF"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -144,7 +153,7 @@
                         android:id="@+id/btnSavedAccountsList"
                         android:layout_width="wrap_content"
                         android:layout_height="34dp"
-                        android:backgroundTint="#7B2CBF"
+                        android:backgroundTint="#7C3AED"
                         android:text="📋 Accounts (0)"
                         android:textAllCaps="false"
                         android:textColor="#FFFFFF"
@@ -158,7 +167,7 @@
                     android:hint="Label (e.g. Office / Personal)"
                     android:inputType="text"
                     android:textColor="#FFFFFF"
-                    android:textColorHint="#94A3B8"
+                    android:textColorHint="#E2E8F0"
                     android:textSize="13sp" />
 
                 <EditText
@@ -168,7 +177,7 @@
                     android:hint="SIP Username / Extension"
                     android:inputType="text"
                     android:textColor="#FFFFFF"
-                    android:textColorHint="#94A3B8"
+                    android:textColorHint="#E2E8F0"
                     android:textSize="13sp" />
 
                 <EditText
@@ -178,7 +187,7 @@
                     android:hint="Password"
                     android:inputType="textPassword"
                     android:textColor="#FFFFFF"
-                    android:textColorHint="#94A3B8"
+                    android:textColorHint="#E2E8F0"
                     android:textSize="13sp" />
 
                 <EditText
@@ -188,7 +197,7 @@
                     android:hint="Domain / Server IP"
                     android:inputType="textUri"
                     android:textColor="#FFFFFF"
-                    android:textColorHint="#94A3B8"
+                    android:textColorHint="#E2E8F0"
                     android:textSize="13sp" />
 
                 <Spinner
@@ -196,20 +205,20 @@
                     android:layout_width="match_parent"
                     android:layout_height="38dp"
                     android:layout_marginTop="4dp"
-                    android:backgroundTint="#00F5D4" />
+                    android:backgroundTint="#FFFFFF" />
 
                 <Button
                     android:id="@+id/btnLogin"
                     android:layout_width="match_parent"
                     android:layout_height="44dp"
                     android:layout_marginTop="6dp"
-                    android:backgroundTint="#00BBF9"
+                    android:backgroundTint="#38BDF8"
                     android:text="➕ Save &amp; Activate Account"
-                    android:textColor="#070B14"
+                    android:textColor="#0F172A"
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- AI Number Display -->
+            <!-- Bright Number Display -->
             <EditText
                 android:id="@+id/etDialNumber"
                 android:layout_width="match_parent"
@@ -222,11 +231,11 @@
                 android:inputType="phone"
                 android:maxLines="1"
                 android:textColor="#FFFFFF"
-                android:textColorHint="#64748B"
-                android:textSize="30sp"
+                android:textColorHint="#99FFFFFF"
+                android:textSize="32sp"
                 android:textStyle="bold" />
 
-            <!-- Circular Cyber Glass Dialpad -->
+            <!-- Luminous Glass Dialpad -->
             <GridLayout
                 android:id="@+id/dialpadGrid"
                 android:layout_width="wrap_content"
@@ -247,9 +256,9 @@
                 <Button android:id="@+id/btn8" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="8\nTUV" android:textColor="#FFFFFF" android:textSize="18sp" />
                 <Button android:id="@+id/btn9" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="9\nWXYZ" android:textColor="#FFFFFF" android:textSize="18sp" />
 
-                <Button android:id="@+id/btnStar" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:text="*" android:textColor="#00F5D4" android:textSize="26sp" />
+                <Button android:id="@+id/btnStar" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:text="*" android:textColor="#FFFFFF" android:textSize="26sp" />
                 <Button android:id="@+id/btn0" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="0\n+" android:textColor="#FFFFFF" android:textSize="20sp" />
-                <Button android:id="@+id/btnHash" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:text="#" android:textColor="#00F5D4" android:textSize="24sp" />
+                <Button android:id="@+id/btnHash" android:layout_width="72dp" android:layout_height="72dp" android:layout_margin="7dp" android:background="@drawable/bg_dial_btn" android:text="#" android:textColor="#FFFFFF" android:textSize="24sp" />
             </GridLayout>
 
             <!-- Centered Call / End Call Toggle Row -->
@@ -268,7 +277,7 @@
                     android:background="@drawable/bg_ai_pill"
                     android:text="🎧 Recs"
                     android:textAllCaps="false"
-                    android:textColor="#E0AAFF"
+                    android:textColor="#FFFFFF"
                     android:textSize="12sp" />
 
                 <Button
@@ -277,7 +286,7 @@
                     android:layout_height="72dp"
                     android:background="@drawable/bg_call_btn"
                     android:text="📞"
-                    android:textColor="#070B14"
+                    android:textColor="#0F172A"
                     android:textSize="26sp" />
 
                 <Button
@@ -287,7 +296,7 @@
                     android:layout_marginStart="22dp"
                     android:background="@drawable/bg_ai_pill"
                     android:text="⌫"
-                    android:textColor="#00F5D4"
+                    android:textColor="#FFFFFF"
                     android:textSize="18sp" />
             </LinearLayout>
 
@@ -308,7 +317,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="Calling..."
-                    android:textColor="#00F5D4"
+                    android:textColor="#FFFFFF"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -319,7 +328,7 @@
                     android:layout_marginTop="2dp"
                     android:gravity="center"
                     android:text="⏱ 00:00"
-                    android:textColor="#FFD166"
+                    android:textColor="#FDE047"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
@@ -365,7 +374,7 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom AI Glass Navigation Bar -->
+    <!-- Bottom Luminous Glass Navigation Bar -->
     <LinearLayout
         android:id="@+id/bottomGlassNav"
         android:layout_width="match_parent"
@@ -386,7 +395,7 @@
             android:background="@android:color/transparent"
             android:text="🔢\nKeypad"
             android:textAllCaps="false"
-            android:textColor="#00F5D4"
+            android:textColor="#FFFFFF"
             android:textSize="11sp" />
 
         <Button
@@ -395,9 +404,9 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="@android:color/transparent"
-            android:text="🕒\nRecents"
+            android:text="📊\nRecents"
             android:textAllCaps="false"
-            android:textColor="#E2E8F0"
+            android:textColor="#FFFFFF"
             android:textSize="11sp" />
 
         <Button
@@ -408,7 +417,7 @@
             android:background="@android:color/transparent"
             android:text="👤\nContacts"
             android:textAllCaps="false"
-            android:textColor="#E2E8F0"
+            android:textColor="#FFFFFF"
             android:textSize="11sp" />
 
         <Button
@@ -419,7 +428,7 @@
             android:background="@android:color/transparent"
             android:text="🤖\nAccounts"
             android:textAllCaps="false"
-            android:textColor="#E0AAFF"
+            android:textColor="#FFFFFF"
             android:textSize="11sp" />
     </LinearLayout>
 

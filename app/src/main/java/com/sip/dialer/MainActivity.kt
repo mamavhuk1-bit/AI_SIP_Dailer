@@ -4,21 +4,31 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.Typeface
+import android.media.AudioAttributes
 import android.media.MediaPlayer
+import android.media.Ringtone
+import android.media.RingtoneManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.ContactsContract
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.RelativeSizeSpan
+import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.widget.*
@@ -47,6 +57,10 @@ class MainActivity : AppCompatActivity() {
     private var lastSavedRecordFileName: String = "Not Recorded"
     private var mediaPlayer: MediaPlayer? = null
 
+    // Incoming Call Ringtone & Vibration
+    private var incomingRingtone: Ringtone? = null
+    private var incomingDialog: AlertDialog? = null
+
     private var proximityWakeLock: PowerManager.WakeLock? = null
 
     // Active Account Info
@@ -65,7 +79,7 @@ class MainActivity : AppCompatActivity() {
 
     // Call History Tracking
     private var activeCallNumber = ""
-    private var activeCallType = "Outgoing"
+    private var activeCallType = "Dialed"
 
     // Quality tracking variables
     private var lastQualityRating = 0f
@@ -128,15 +142,11 @@ class MainActivity : AppCompatActivity() {
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
-            runOnUiThread {
-                updateNetworkStatusAndFetchIsp()
-            }
+            runOnUiThread { updateNetworkStatusAndFetchIsp() }
         }
 
         override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
-            runOnUiThread {
-                updateNetworkTypeLabel(networkCapabilities)
-            }
+            runOnUiThread { updateNetworkTypeLabel(networkCapabilities) }
         }
 
         override fun onLost(network: Network) {
@@ -182,6 +192,66 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // --- Ringtone & Vibration Helpers ---
+    private fun startIncomingRingtone() {
+        try {
+            stopIncomingRingtone()
+            var ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+            if (ringtoneUri == null) {
+                ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            }
+            incomingRingtone = RingtoneManager.getRingtone(applicationContext, ringtoneUri)
+            incomingRingtone?.apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    isLooping = true
+                }
+                audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                play()
+            }
+
+            // Start repeating vibration
+            val pattern = longArrayOf(0, 700, 600)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vm.defaultVibrator.vibrate(VibrationEffect.createWaveform(pattern, 0))
+            } else {
+                @Suppress("DEPRECATION")
+                val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    v.vibrate(VibrationEffect.createWaveform(pattern, 0))
+                } else {
+                    @Suppress("DEPRECATION")
+                    v.vibrate(pattern, 0)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun stopIncomingRingtone() {
+        try {
+            if (incomingRingtone?.isPlaying == true) {
+                incomingRingtone?.stop()
+            }
+        } catch (_: Exception) {}
+        incomingRingtone = null
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vm.defaultVibrator.cancel()
+            } else {
+                @Suppress("DEPRECATION")
+                val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                v.cancel()
+            }
+        } catch (_: Exception) {}
+    }
+
     private val coreListener = object : CoreListenerStub() {
         override fun onAccountRegistrationStateChanged(
             core: Core,
@@ -195,22 +265,22 @@ class MainActivity : AppCompatActivity() {
                 when (state) {
                     RegistrationState.Ok -> {
                         tvStatus.text = "● $tag ▾"
-                        tvStatus.setTextColor(0xFF00F5D4.toInt())
+                        tvStatus.setTextColor(0xFF6EE7B7.toInt())
                         layoutLoginCard.visibility = View.GONE
                         startLivePing()
                     }
                     RegistrationState.Progress -> {
                         tvStatus.text = "● Connecting $tag..."
-                        tvStatus.setTextColor(0xFFFFD166.toInt())
+                        tvStatus.setTextColor(0xFFFDE047.toInt())
                     }
                     RegistrationState.Failed -> {
                         tvStatus.text = "● Failed: $tag ▾"
-                        tvStatus.setTextColor(0xFFFF4D6D.toInt())
+                        tvStatus.setTextColor(0xFFFCA5A5.toInt())
                         stopLivePing()
                     }
                     else -> {
                         tvStatus.text = "● Offline ($tag) ▾"
-                        tvStatus.setTextColor(0xFFFF4D6D.toInt())
+                        tvStatus.setTextColor(0xFFFCA5A5.toInt())
                         stopLivePing()
                     }
                 }
@@ -229,11 +299,11 @@ class MainActivity : AppCompatActivity() {
                         currentCall = call
                         setCallButtonState(true)
                         activeCallNumber = call.remoteAddress.username ?: call.remoteAddress.asStringUriOnly()
-                        activeCallType = "Outgoing"
+                        activeCallType = "Dialed"
                         lastFormattedDuration = "00:00"
                         lastSavedRecordFileName = "Not Recorded"
                         layoutInCall.visibility = View.VISIBLE
-                        tvCallState.text = "📞 Calling $activeCallNumber..."
+                        tvCallState.text = "📤 Dialing $activeCallNumber..."
                         tvCallTimer.text = "⏱ Ringing..."
                         enableProximitySensor(true)
                     }
@@ -241,12 +311,15 @@ class MainActivity : AppCompatActivity() {
                         currentCall = call
                         setCallButtonState(true)
                         activeCallNumber = call.remoteAddress.username ?: call.remoteAddress.asStringUriOnly()
-                        activeCallType = "Incoming"
+                        activeCallType = "Received"
                         lastFormattedDuration = "00:00"
                         lastSavedRecordFileName = "Not Recorded"
+                        startIncomingRingtone()
                         showIncomingCallDialog(call)
                     }
                     Call.State.Connected, Call.State.StreamsRunning -> {
+                        stopIncomingRingtone()
+                        incomingDialog?.dismiss()
                         currentCall = call
                         setCallButtonState(true)
                         layoutInCall.visibility = View.VISIBLE
@@ -256,6 +329,8 @@ class MainActivity : AppCompatActivity() {
                         captureCallMetrics(call)
                     }
                     Call.State.End, Call.State.Released -> {
+                        stopIncomingRingtone()
+                        incomingDialog?.dismiss()
                         stopCallTimer()
                         enableProximitySensor(false)
                         setCallButtonState(false)
@@ -270,7 +345,7 @@ class MainActivity : AppCompatActivity() {
                             btnRecord.setBackgroundColor(0xFF1E293B.toInt())
                         }
                         if (activeCallNumber.isNotEmpty()) {
-                            val finalType = if (lastFormattedDuration == "00:00" && activeCallType == "Incoming") "Missed" else activeCallType
+                            val finalType = if (lastFormattedDuration == "00:00" && activeCallType == "Received") "Missed" else activeCallType
                             saveCallToHistory(activeCallNumber, finalType, lastFormattedDuration)
                             activeCallNumber = ""
                         }
@@ -279,6 +354,8 @@ class MainActivity : AppCompatActivity() {
                         showCallQualitySummary()
                     }
                     Call.State.Error -> {
+                        stopIncomingRingtone()
+                        incomingDialog?.dismiss()
                         stopCallTimer()
                         enableProximitySensor(false)
                         setCallButtonState(false)
@@ -286,7 +363,7 @@ class MainActivity : AppCompatActivity() {
                         btnRecord.text = "⏺ Record"
                         btnRecord.setBackgroundColor(0xFF1E293B.toInt())
                         if (activeCallNumber.isNotEmpty()) {
-                            saveCallToHistory(activeCallNumber, "Failed", "00:00")
+                            saveCallToHistory(activeCallNumber, "Missed", "00:00")
                             activeCallNumber = ""
                         }
                         layoutInCall.visibility = View.GONE
@@ -374,19 +451,19 @@ class MainActivity : AppCompatActivity() {
         when {
             caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
                 tvNetworkType.text = "📶 Wi-Fi"
-                tvNetworkType.setTextColor(0xFF00F5D4.toInt())
+                tvNetworkType.setTextColor(0xFF6EE7B7.toInt())
             }
             caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
                 tvNetworkType.text = "📡 Mobile Data"
-                tvNetworkType.setTextColor(0xFFFFD166.toInt())
+                tvNetworkType.setTextColor(0xFFFDE047.toInt())
             }
             caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
                 tvNetworkType.text = "🔌 Ethernet"
-                tvNetworkType.setTextColor(0xFF00BBF9.toInt())
+                tvNetworkType.setTextColor(0xFF7DD3FC.toInt())
             }
             else -> {
-                tvNetworkType.text = "🌐 Connected"
-                tvNetworkType.setTextColor(0xFFE0AAFF.toInt())
+                tvNetworkType.text = "🌐 Online"
+                tvNetworkType.setTextColor(0xFFFFFFFF.toInt())
             }
         }
     }
@@ -423,7 +500,6 @@ class MainActivity : AppCompatActivity() {
                     ispResult = if (isp.isNotEmpty()) isp else org
                 }
             } catch (e: Exception) {
-                // Fallback to ipwhois.app
                 try {
                     val url2 = URL("https://ipwho.is/")
                     val conn2 = url2.openConnection() as HttpURLConnection
@@ -446,7 +522,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- Multi-Account Management (Add, Switch, Delete) ---
+    // --- Multi-Account Management ---
     private fun getSavedAccounts(): JSONArray {
         val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
         val raw = prefs.getString("multi_accounts", "[]") ?: "[]"
@@ -505,7 +581,6 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
         val accounts = getSavedAccounts()
 
-        // Migrate legacy single account if multi_accounts is empty
         if (accounts.length() == 0) {
             val oldUser = prefs.getString("username", "") ?: ""
             val oldPass = prefs.getString("password", "") ?: ""
@@ -598,10 +673,220 @@ class MainActivity : AppCompatActivity() {
                         core.clearAccounts()
                         core.clearAllAuthInfo()
                         activeDomain = ""
-                        tvStatus.text = "● No Account (Tap to Add)"
+                        tvStatus.text = "● No Account (Tap) ▾"
                         layoutLoginCard.visibility = View.VISIBLE
                     }
                 }
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    // --- Tabbed Table Call History (All / Missed / Dialed / Received) ---
+    private fun saveCallToHistory(number: String, type: String, duration: String) {
+        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
+        val historyJson = prefs.getString("call_history", "[]") ?: "[]"
+        val jsonArray = JSONArray(historyJson)
+
+        val timeStr = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date())
+        val entry = JSONObject().apply {
+            put("number", number)
+            put("type", type)
+            put("duration", duration)
+            put("time", timeStr)
+        }
+
+        val updatedArray = JSONArray()
+        updatedArray.put(entry)
+        for (i in 0 until minOf(jsonArray.length(), 49)) {
+            updatedArray.put(jsonArray.getJSONObject(i))
+        }
+
+        prefs.edit().putString("call_history", updatedArray.toString()).apply()
+    }
+
+    private fun showRecentCallsDialog() {
+        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
+        val historyJson = prefs.getString("call_history", "[]") ?: "[]"
+        val jsonArray = JSONArray(historyJson)
+
+        val rootLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(24, 20, 24, 12)
+            setBackgroundColor(Color.parseColor("#0F172A"))
+        }
+
+        // Summary Stats Chart Bar (Missed / Dialed / Received Counts)
+        var missedCount = 0
+        var dialedCount = 0
+        var receivedCount = 0
+        for (i in 0 until jsonArray.length()) {
+            when (jsonArray.getJSONObject(i).optString("type")) {
+                "Missed" -> missedCount++
+                "Dialed", "Outgoing" -> dialedCount++
+                "Received", "Incoming" -> receivedCount++
+            }
+        }
+
+        val chartSummary = TextView(this).apply {
+            text = "📊 Summary:   ❌ Missed: $missedCount   |   📤 Dialed: $dialedCount   |   📥 Received: $receivedCount"
+            setTextColor(Color.parseColor("#38BDF8"))
+            textSize = 12f
+            setTypeface(null, Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(12, 14, 12, 14)
+            setBackgroundColor(Color.parseColor("#1E293B"))
+        }
+        rootLayout.addView(chartSummary)
+
+        // Filter Tabs Row
+        val tabRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(0, 14, 0, 14)
+        }
+
+        val tabs = listOf("All", "Missed", "Dialed", "Received")
+        val tabButtons = mutableListOf<Button>()
+        val tableContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        var dialogRef: AlertDialog? = null
+
+        fun renderTable(filter: String) {
+            tableContainer.removeAllViews()
+
+            // Highlight active tab
+            for (b in tabButtons) {
+                if (b.tag == filter) {
+                    b.setBackgroundColor(Color.parseColor("#38BDF8"))
+                    b.setTextColor(Color.parseColor("#0F172A"))
+                } else {
+                    b.setBackgroundColor(Color.parseColor("#1E293B"))
+                    b.setTextColor(Color.WHITE)
+                }
+            }
+
+            // Table Header Row
+            val headerRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                setBackgroundColor(Color.parseColor("#334155"))
+                setPadding(14, 12, 14, 12)
+            }
+            val headers = listOf("Type" to 0.9f, "Number" to 1.6f, "Time" to 0.9f, "Date" to 1.4f)
+            for ((title, weight) in headers) {
+                val tv = TextView(this).apply {
+                    text = title
+                    setTextColor(Color.parseColor("#7DD3FC"))
+                    textSize = 12f
+                    setTypeface(null, Typeface.BOLD)
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
+                }
+                headerRow.addView(tv)
+            }
+            tableContainer.addView(headerRow)
+
+            var matchCount = 0
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                val rawType = obj.optString("type", "Dialed")
+                val normalizedType = when (rawType) {
+                    "Outgoing" -> "Dialed"
+                    "Incoming" -> "Received"
+                    else -> rawType
+                }
+
+                if (filter != "All" && normalizedType != filter) continue
+                matchCount++
+
+                val row = LinearLayout(this).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    setPadding(14, 14, 14, 14)
+                    setBackgroundColor(if (matchCount % 2 == 0) Color.parseColor("#1E293B") else Color.parseColor("#0F172A"))
+                }
+
+                val (badge, badgeColor) = when (normalizedType) {
+                    "Missed" -> "❌ Miss" to "#FCA5A5"
+                    "Received" -> "📥 Recv" to "#6EE7B7"
+                    else -> "📤 Dial" to "#93C5FD"
+                }
+
+                val num = obj.optString("number", "")
+                val dur = obj.optString("duration", "00:00")
+                val time = obj.optString("time", "")
+
+                val cells = listOf(
+                    Triple(badge, 0.9f, badgeColor),
+                    Triple(num, 1.6f, "#FFFFFF"),
+                    Triple(dur, 0.9f, "#FDE047"),
+                    Triple(time, 1.4f, "#CBD5E1")
+                )
+
+                for ((cellText, weight, hexColor) in cells) {
+                    val tv = TextView(this).apply {
+                        text = cellText
+                        setTextColor(Color.parseColor(hexColor))
+                        textSize = 11.5f
+                        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
+                    }
+                    row.addView(tv)
+                }
+
+                row.setOnClickListener {
+                    dialogRef?.dismiss()
+                    etDialNumber.setText(num)
+                    makeCall(num)
+                }
+
+                tableContainer.addView(row)
+            }
+
+            if (matchCount == 0) {
+                val emptyTv = TextView(this).apply {
+                    text = "No $filter calls found."
+                    setTextColor(Color.parseColor("#94A3B8"))
+                    gravity = Gravity.CENTER
+                    setPadding(16, 36, 16, 36)
+                }
+                tableContainer.addView(emptyTv)
+            }
+        }
+
+        for (tabName in tabs) {
+            val btn = Button(this).apply {
+                text = tabName
+                tag = tabName
+                textSize = 11f
+                isAllCaps = false
+                layoutParams = LinearLayout.LayoutParams(0, 96, 1f).apply {
+                    setMargins(4, 0, 4, 0)
+                }
+                setOnClickListener { renderTable(tabName) }
+            }
+            tabButtons.add(btn)
+            tabRow.addView(btn)
+        }
+
+        rootLayout.addView(tabRow)
+
+        val scrollView = ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                650
+            )
+            addView(tableContainer)
+        }
+        rootLayout.addView(scrollView)
+
+        renderTable("All")
+
+        dialogRef = AlertDialog.Builder(this)
+            .setTitle("📊 Call History Table (Tap Row to Call)")
+            .setView(rootLayout)
+            .setNeutralButton("🗑️ Clear") { _, _ ->
+                prefs.edit().remove("call_history").apply()
+                Toast.makeText(this, "Call history cleared", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Close", null)
             .show()
@@ -672,18 +957,18 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 if (pingMs >= 0) {
                     val color = when {
-                        pingMs < 80 -> 0xFF00F5D4.toInt()
-                        pingMs < 180 -> 0xFFFFD166.toInt()
-                        else -> 0xFFFF4D6D.toInt()
+                        pingMs < 80 -> 0xFF6EE7B7.toInt()
+                        pingMs < 180 -> 0xFFFDE047.toInt()
+                        else -> 0xFFFCA5A5.toInt()
                     }
                     tvLivePing.text = "⚡ ${pingMs} ms"
                     tvLivePing.setTextColor(color)
                 } else if (currentCall != null && lastDelay > 0f) {
                     tvLivePing.text = "⚡ ${lastDelay.toInt()} ms"
-                    tvLivePing.setTextColor(0xFF00F5D4.toInt())
+                    tvLivePing.setTextColor(0xFF6EE7B7.toInt())
                 } else {
                     tvLivePing.text = "⚡ Online"
-                    tvLivePing.setTextColor(0xFF90E0EF.toInt())
+                    tvLivePing.setTextColor(0xFFBAE6FD.toInt())
                 }
             }
         }
@@ -783,71 +1068,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveCallToHistory(number: String, type: String, duration: String) {
-        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
-        val historyJson = prefs.getString("call_history", "[]") ?: "[]"
-        val jsonArray = JSONArray(historyJson)
-
-        val timeStr = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date())
-        val entry = JSONObject().apply {
-            put("number", number)
-            put("type", type)
-            put("duration", duration)
-            put("time", timeStr)
-        }
-
-        val updatedArray = JSONArray()
-        updatedArray.put(entry)
-        for (i in 0 until minOf(jsonArray.length(), 29)) {
-            updatedArray.put(jsonArray.getJSONObject(i))
-        }
-
-        prefs.edit().putString("call_history", updatedArray.toString()).apply()
-    }
-
-    private fun showRecentCallsDialog() {
-        val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
-        val historyJson = prefs.getString("call_history", "[]") ?: "[]"
-        val jsonArray = JSONArray(historyJson)
-
-        if (jsonArray.length() == 0) {
-            Toast.makeText(this, "No recent calls yet!", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val displayItems = Array(jsonArray.length()) { i ->
-            val obj = jsonArray.getJSONObject(i)
-            val icon = when (obj.getString("type")) {
-                "Outgoing" -> "📤"
-                "Incoming" -> "📥"
-                "Missed" -> "❌"
-                else -> "⚠️"
-            }
-            val num = obj.getString("number")
-            val dur = obj.getString("duration")
-            val time = obj.getString("time")
-            "$icon  $num  (⏱ $dur)\n      🕒 $time"
-        }
-
-        val numbers = Array(jsonArray.length()) { i ->
-            jsonArray.getJSONObject(i).getString("number")
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("🕒 Recent Calls (Tap to Call)")
-            .setItems(displayItems) { _, which ->
-                val selectedNumber = numbers[which]
-                etDialNumber.setText(selectedNumber)
-                makeCall(selectedNumber)
-            }
-            .setNeutralButton("Clear History") { _, _ ->
-                prefs.edit().remove("call_history").apply()
-                Toast.makeText(this, "Call history cleared", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Close", null)
-            .show()
-    }
-
     private fun showRecordingsDialog() {
         val dir = getRecordingsDirectory()
         val files = dir.listFiles { file -> file.extension.equals("wav", ignoreCase = true) && file.length() > 44 }
@@ -913,7 +1133,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
-        // Tapping top status opens multi-account switcher directly
         tvStatus.setOnClickListener {
             showMultiAccountSwitcherDialog()
         }
@@ -1088,17 +1307,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showIncomingCallDialog(call: Call) {
+        incomingDialog?.dismiss()
         val caller = call.remoteAddress.username ?: call.remoteAddress.asStringUriOnly()
-        AlertDialog.Builder(this)
+        incomingDialog = AlertDialog.Builder(this)
             .setTitle("📲 Incoming SIP Call")
             .setMessage("Caller: $caller")
             .setPositiveButton("✅ Answer") { _, _ ->
+                stopIncomingRingtone()
                 val params = core.createCallParams(call)
                 params?.isAudioEnabled = true
                 params?.recordFile = prepareRecordFilePath("InCall")
                 call.acceptWithParams(params)
             }
             .setNegativeButton("❌ Decline") { _, _ ->
+                stopIncomingRingtone()
                 call.decline(Reason.Declined)
             }
             .setCancelable(false)
@@ -1149,6 +1371,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopIncomingRingtone()
         try {
             val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             cm.unregisterNetworkCallback(networkCallback)

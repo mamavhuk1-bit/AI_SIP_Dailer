@@ -11,12 +11,25 @@ android {
         applicationId "com.ai.sip.dialer"
         minSdk 24
         targetSdk 34
-        versionCode 5
-        versionName "1.5"
+        versionCode 6
+        versionName "1.5.1"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("my-release-key.jks")
+            storePassword "123456"
+            keyAlias "dialerkey"
+            keyPassword "123456"
+        }
     }
 
     buildTypes {
+        debug {
+            signingConfig signingConfigs.release
+        }
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
         }
     }

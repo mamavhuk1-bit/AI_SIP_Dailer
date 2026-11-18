@@ -45,6 +45,7 @@ import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.*
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -101,6 +102,8 @@ class MainActivity : AppCompatActivity() {
 
     private val phoneContactsList = mutableListOf<Pair<String, String>>()
     private var currentHistoryFilter = "All"
+    private var lastBackPressTime = 0L
+    private lateinit var tvAiLiveEngineStatus: TextView
 
     private lateinit var rootContainer: RelativeLayout
     private lateinit var tvLiveClockDate: TextView
@@ -331,6 +334,7 @@ class MainActivity : AppCompatActivity() {
                 refreshTopMultiPingStrip()
                 val okCount = accountStateMap.values.count { it == "OK" }
                 SipKeepAliveService.startService(this@MainActivity, "$okCount SIP Account(s) Online • Ready")
+                tvAiLiveEngineStatus.text = if (okCount > 0) "✨ AI Engine Ready • $okCount Line(s) Online" else "⚡ AI Engine Standby • Add SIP" 
             }
         }
 
@@ -469,12 +473,42 @@ class MainActivity : AppCompatActivity() {
         registerAllSavedAccountsSimultaneously()
         SipKeepAliveService.startService(this)
         mainHandler.post(clockRunnable)
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // 1. If in Settings sub-screen, go back to Settings Menu Hub
+                if (tabSettingsView.visibility == View.VISIBLE && settingsMenuHub.visibility != View.VISIBLE) {
+                    openSettingsSubScreen("HUB")
+                    return
+                }
+                // 2. If in Recents, Contacts, or Settings tab, go back to Keypad tab
+                if (tabRecentsView.visibility == View.VISIBLE ||
+                    tabContactsView.visibility == View.VISIBLE ||
+                    tabSettingsView.visibility == View.VISIBLE) {
+                    switchMainTab("KEYPAD")
+                    return
+                }
+                // 3. On Keypad tab: double-back to minimize (keeps SIP alive in background instead of killing app)
+                val now = SystemClock.elapsedRealtime()
+                if (now - lastBackPressTime < 2000) {
+                    moveTaskToBack(true)
+                } else {
+                    lastBackPressTime = now
+                    Toast.makeText(this@MainActivity, "Press Back again to minimize (SIP stays active)", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
         startLivePing()
     }
 
     private fun initViews() {
         rootContainer = findViewById(R.id.rootContainer)
         tvLiveClockDate = findViewById(R.id.tvLiveClockDate)
+        tvAiLiveEngineStatus = findViewById(R.id.tvAiLiveEngineStatus)
+        ObjectAnimator.ofFloat(tvAiLiveEngineStatus, View.ALPHA, 1f, 0.45f, 1f).apply {
+            duration = 1800
+            repeatCount = ValueAnimator.INFINITE
+            start()
+        }
         layoutMultiPingStrip = findViewById(R.id.layoutMultiPingStrip)
         tvNetworkType = findViewById(R.id.tvNetworkType)
         tvPublicIp = findViewById(R.id.tvPublicIp)

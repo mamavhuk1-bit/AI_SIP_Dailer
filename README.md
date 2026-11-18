@@ -1,4 +1,3 @@
-cat << 'EOF' > README.md
 <div align="center">
 
   <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='110' height='110' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' fill='%2300F5D4'/><path fill='%23090D16' d='M16.5,15.5c-1.1,0 -2.2,-0.2 -3.2,-0.5 -0.3,-0.1 -0.7,0 -0.9,0.2l-1.4,1.4c-2.5,-1.3 -4.6,-3.4 -5.9,-5.9l1.4,-1.4c0.2,-0.2 0.3,-0.6 0.2,-0.9 -0.3,-1 -0.5,-2.1 -0.5,-3.2 0,-0.5 -0.4,-0.9 -0.9,-0.9H6.5c-0.5,0 -0.9,0.4 -0.9,0.9 0,7.2 5.8,13 13,13 0.5,0 0.9,-0.4 0.9,-0.9v-2.9c0,-0.5 -0.4,-0.9 -0.9,-0.9z'/></svg>" alt="AI SIP Dialer Logo" width="105" height="105" />
@@ -71,6 +70,3 @@ cat << 'EOF' > README.md
     <sub>App v1.5</sub>
   </p>
 </div>
-EOF
-
-git add README.md && git commit -m "Update bilingual README.md for v1.5 release" && git push origin main

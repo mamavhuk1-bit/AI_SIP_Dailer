@@ -76,7 +76,7 @@ class CuteKittenRoamView @JvmOverloads constructor(
     }
 
     private fun updateSimulation() {
-        val w = width.toFloat() / 1.45f
+        val w = width.toFloat() / 1.6f
         if (w <= 40f) return
         cycle += 0.35f
 
@@ -133,7 +133,7 @@ class CuteKittenRoamView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val scaleFactor = 1.45f
+        val scaleFactor = 1.6f
         val w = width.toFloat() / scaleFactor
         val h = height.toFloat() / scaleFactor
         if (w <= 30f || h <= 8f) return

@@ -1602,7 +1602,7 @@ class MainActivity : AppCompatActivity() {
             // 1. Send out-of-band RFC 2833 RTP telephone-event
             call.sendDtmf(digit)
             // 2. Inject in-band DTMF audio directly into outgoing SIP voice stream (250ms)
-            core.playDtmf(digit, 250)
+            core.playDtmf(digit.code.toShort(), 250)
             mainHandler.postDelayed({
                 try { core.stopDtmf() } catch (_: Exception) {}
             }, 260)

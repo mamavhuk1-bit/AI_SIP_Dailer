@@ -1534,14 +1534,18 @@ class MainActivity : AppCompatActivity() {
         for (k in keys) {
             gridInCallDtmf.addView(Button(this).apply {
                 text = k
+                textSize = 18f
+                setTypeface(null, Typeface.BOLD)
                 setTextColor(Color.WHITE)
-                textSize = 15f
-                setBackgroundResource(R.drawable.bg_ai_pill)
-                layoutParams = GridLayout.LayoutParams().apply { width = 130; height = 90; setMargins(6, 5, 6, 5) }
+                setBackgroundResource(R.drawable.bg_dial_btn)
+                layoutParams = GridLayout.LayoutParams().apply {
+                    width = (74 * resources.displayMetrics.density).toInt()
+                    height = (46 * resources.displayMetrics.density).toInt()
+                    setMargins(10, 8, 10, 8)
+                }
                 setOnClickListener {
-                    it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                    sendReliableDtmf(k[0])
                     tvDtmfEntered.append(k)
+                    sendReliableDtmf(k[0])
                 }
             })
         }

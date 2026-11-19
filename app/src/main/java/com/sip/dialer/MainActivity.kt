@@ -1742,13 +1742,7 @@ class MainActivity : AppCompatActivity() {
         core = factory.createCore(null, null, this)
         core.useRfc2833ForDtmf = true
         core.useInfoForDtmf = false
-        for (pt in core.audioPayloadTypes) {
-            if (pt.mimeType.equals("telephone-event", ignoreCase = true) ||
-                pt.mimeType.equals("PCMU", ignoreCase = true) ||
-                pt.mimeType.equals("PCMA", ignoreCase = true)) {
-                pt.enable(true)
-            }
-        }
+
         core.addListener(coreListener)
         core.start()
     }

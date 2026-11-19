@@ -1594,16 +1594,46 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateDtmfModeLabel() {
+        val mode = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE).getInt("dtmf_mode", 0)
+        val tag = when (mode) { 1 -> "[RFC2833]"; 2 -> "[SIP-INFO]"; else -> "[DUAL]" }
+        if (!tvDtmfEntered.text.toString().contains("[")) {
+            tvDtmfEntered.text = "DTMF $tag (Tap to switch): "
+        } else {
+            val suffix = tvDtmfEntered.text.toString().substringAfter(": ", "")
+            tvDtmfEntered.text = "DTMF $tag (Tap to switch): $suffix"
+        }
+    }
+
+    private fun applyDtmfConfig() {
+        val mode = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE).getInt("dtmf_mode", 0)
+        when (mode) {
+            1 -> { // RFC 2833 Only
+                core.useRfc2833ForDtmf = true
+                core.useInfoForDtmf = false
+            }
+            2 -> { // SIP INFO Only (Best for BD PSTN/Helpline Gateways)
+                core.useRfc2833ForDtmf = false
+                core.useInfoForDtmf = true
+            }
+            else -> { // Dual Mode: RFC 2833 + SIP INFO
+                core.useRfc2833ForDtmf = true
+                core.useInfoForDtmf = true
+            }
+        }
+    }
+
     private fun sendReliableDtmf(digit: Char) {
         try {
             val call = currentCall ?: return
-            // 1. Send out-of-band RFC 2833 RTP telephone-event
-            call.sendDtmf(digit)
-            // 2. Inject in-band DTMF audio directly into outgoing SIP voice stream (250ms)
-            core.playDtmf(digit, 250)
+            applyDtmfConfig()
+            // Send standard DTMF string (triggers full RFC2833 / SIP INFO packet)
+            call.sendDtmfs(digit.toString())
+            // Play audible local feedback tone for 350ms
+            core.playDtmf(digit, 350)
             mainHandler.postDelayed({
                 try { core.stopDtmf() } catch (_: Exception) {}
-            }, 260)
+            }, 380)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -1843,6 +1873,16 @@ class MainActivity : AppCompatActivity() {
         }
         btnToggleInCallDtmf.setOnClickListener {
             layoutInCallDtmf.visibility = if (layoutInCallDtmf.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+            updateDtmfModeLabel()
+        }
+        tvDtmfEntered.setOnClickListener {
+            val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
+            val nextMode = (prefs.getInt("dtmf_mode", 0) + 1) % 3
+            prefs.edit().putInt("dtmf_mode", nextMode).apply()
+            applyDtmfConfig()
+            updateDtmfModeLabel()
+            val modeName = when (nextMode) { 1 -> "RFC 2833 Only"; 2 -> "SIP INFO Only"; else -> "Dual (RFC2833 + INFO)" }
+            Toast.makeText(this, "DTMF Mode: $modeName", Toast.LENGTH_SHORT).show()
         }
         btnInCallAddNote.setOnClickListener {
             val p = accountPingMap[activeCallLineKey] ?: "--"

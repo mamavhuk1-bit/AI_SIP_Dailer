@@ -498,6 +498,34 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+        try {
+            val verName = packageManager.getPackageInfo(packageName, 0).versionName ?: "1.6.9"
+            findViewById<TextView>(R.id.tvTopVersionBadge)?.text = "v$verName"
+            findViewById<TextView>(R.id.tvSettingsAboutSub)?.text = "App v$verName • Credits & Developer Info"
+            findViewById<TextView>(R.id.tvAboutVersionBadge)?.text = "App v $verName"
+        } catch (_: Exception) {}
+
+        findViewById<ImageView>(R.id.ivAboutAnimatedLogo)?.let { logo ->
+            ObjectAnimator.ofFloat(logo, View.TRANSLATION_Y, -10f, 10f).apply {
+                duration = 1600
+                repeatMode = ValueAnimator.REVERSE
+                repeatCount = ValueAnimator.INFINITE
+                start()
+            }
+            ObjectAnimator.ofFloat(logo, View.SCALE_X, 0.94f, 1.06f).apply {
+                duration = 1600
+                repeatMode = ValueAnimator.REVERSE
+                repeatCount = ValueAnimator.INFINITE
+                start()
+            }
+            ObjectAnimator.ofFloat(logo, View.SCALE_Y, 0.94f, 1.06f).apply {
+                duration = 1600
+                repeatMode = ValueAnimator.REVERSE
+                repeatCount = ValueAnimator.INFINITE
+                start()
+            }
+        }
+
         startLivePing()
     }
 

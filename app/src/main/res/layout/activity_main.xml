@@ -17,91 +17,87 @@
         android:paddingHorizontal="11dp"
         android:paddingVertical="9dp">
 
-        <!-- Row 1: Left AI Brand & Status | Right Waving BD Flag & Clock -->
+        <!-- Row 1A: Top Line -> Logo/Title (Left) + Wide Kitten Playground (Center) + Flag (Right) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
+            android:gravity="bottom"
             android:orientation="horizontal">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingBottom="3dp">
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@drawable/ic_app_logo" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:text="AI SIP Dialer"
-                        android:textColor="#FFFFFF"
-                        android:textSize="13.5sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="5dp"
-                        android:background="@drawable/bg_ai_pill"
-                        android:paddingHorizontal="6dp"
-                        android:paddingVertical="1dp"
-                        android:text="v1.6.3"
-                        android:textColor="#7DD3FC"
-                        android:textSize="9sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_app_logo" />
 
                 <TextView
-                    android:id="@+id/tvAiLiveEngineStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="✨ AI VoIP Engine Active"
-                    android:textColor="#6EE7B7"
-                    android:textSize="10sp"
+                    android:layout_marginStart="5dp"
+                    android:text="AI SIP Dialer"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13.5sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/bg_ai_pill"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1dp"
+                    android:text="v1.6.4"
+                    android:textColor="#7DD3FC"
+                    android:textSize="9sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Kitten House, Food Bowl, Toy Ball & Kitten in Center Space -->
+            <!-- Wide Kitten House, Food Bowl, Toy Ball & Kitten right between Title & Flag -->
             <com.sip.dialer.CuteKittenRoamView
                 android:id="@+id/kittenRoamView"
                 android:layout_width="0dp"
-                android:layout_height="44dp"
+                android:layout_height="34dp"
                 android:layout_marginHorizontal="6dp"
                 android:layout_weight="1" />
 
-            <LinearLayout
+            <com.sip.dialer.WavingBdFlagView
+                android:id="@+id/wavingBdFlag"
+                android:layout_width="38dp"
+                android:layout_height="25dp" />
+        </LinearLayout>
+
+        <!-- Row 1B: Second Line -> AI Engine Status (Left) & Live Clock/Date (Right) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvAiLiveEngineStatus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="✨ AI VoIP Engine Active"
+                android:textColor="#6EE7B7"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvLiveClockDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="end"
-                android:orientation="vertical">
-
-                <com.sip.dialer.WavingBdFlagView
-                    android:id="@+id/wavingBdFlag"
-                    android:layout_width="40dp"
-                    android:layout_height="24dp" />
-
-                <TextView
-                    android:id="@+id/tvLiveClockDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="1dp"
-                    android:text="🕒 12:00:00 AM • 19 Nov 2026"
-                    android:textColor="#FDE047"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:text="🕒 12:00:00 AM • 19 Nov 2026"
+                android:textColor="#FDE047"
+                android:textSize="10sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <!-- Row 2: Multi-SIP Simultaneous Status & Ping Strip -->

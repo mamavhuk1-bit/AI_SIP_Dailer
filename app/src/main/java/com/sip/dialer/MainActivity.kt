@@ -1631,36 +1631,59 @@ class MainActivity : AppCompatActivity() {
     private fun sendReliableDtmf(digit: Char) {
         try {
             val call = currentCall ?: return
-            applyDtmfConfig()
             val mode = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE).getInt("dtmf_mode", 0)
 
-            // 1. Send SIP signaling DTMF (RFC 2833 / SIP INFO) with 450ms spacing
-            if (mode != 3) {
-                call.sendDtmf(digit)
+            // Ensure mic/audio stream stays active so RTP packets flow uninterrupted
+            if (!core.isMicEnabled) core.isMicEnabled = true
+
+            when (mode) {
+                1 -> { // RFC 2833 RTP Telephone-Event Only (MizuDroid Default)
+                    core.useRfc2833ForDtmf = true
+                    core.useInfoForDtmf = false
+                    call.sendDtmf(digit)
+                }
+                2 -> { // SIP INFO (application/dtmf-relay) Only
+                    core.useRfc2833ForDtmf = false
+                    core.useInfoForDtmf = true
+                    call.sendDtmf(digit)
+                }
+                else -> { // Dual Mode: Send RFC 2833 first, then SIP INFO 180ms later
+                    core.useRfc2833ForDtmf = true
+                    core.useInfoForDtmf = false
+                    call.sendDtmf(digit)
+                    mainHandler.postDelayed({
+                        try {
+                            core.useRfc2833ForDtmf = false
+                            core.useInfoForDtmf = true
+                            currentCall?.sendDtmf(digit)
+                            // Restore RFC2833 default
+                            core.useRfc2833ForDtmf = true
+                            core.useInfoForDtmf = false
+                        } catch (_: Exception) {}
+                    }, 180)
+                }
             }
 
-            // 2. Also generate real dual-frequency DTMF audio through voice stream / speaker for In-Band gateways
-            if (mode == 0 || mode == 3) {
-                val toneType = when (digit) {
-                    '0' -> ToneGenerator.TONE_DTMF_0
-                    '1' -> ToneGenerator.TONE_DTMF_1
-                    '2' -> ToneGenerator.TONE_DTMF_2
-                    '3' -> ToneGenerator.TONE_DTMF_3
-                    '4' -> ToneGenerator.TONE_DTMF_4
-                    '5' -> ToneGenerator.TONE_DTMF_5
-                    '6' -> ToneGenerator.TONE_DTMF_6
-                    '7' -> ToneGenerator.TONE_DTMF_7
-                    '8' -> ToneGenerator.TONE_DTMF_8
-                    '9' -> ToneGenerator.TONE_DTMF_9
-                    '*' -> ToneGenerator.TONE_DTMF_S
-                    '#' -> ToneGenerator.TONE_DTMF_P
-                    else -> -1
-                }
-                if (toneType != -1) {
-                    val tg = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 95)
-                    tg.startTone(toneType, 450)
-                    mainHandler.postDelayed({ try { tg.release() } catch (_: Exception) {} }, 500)
-                }
+            // Soft local feedback on STREAM_MUSIC (never blocks STREAM_VOICE_CALL!)
+            val toneType = when (digit) {
+                '0' -> ToneGenerator.TONE_DTMF_0
+                '1' -> ToneGenerator.TONE_DTMF_1
+                '2' -> ToneGenerator.TONE_DTMF_2
+                '3' -> ToneGenerator.TONE_DTMF_3
+                '4' -> ToneGenerator.TONE_DTMF_4
+                '5' -> ToneGenerator.TONE_DTMF_5
+                '6' -> ToneGenerator.TONE_DTMF_6
+                '7' -> ToneGenerator.TONE_DTMF_7
+                '8' -> ToneGenerator.TONE_DTMF_8
+                '9' -> ToneGenerator.TONE_DTMF_9
+                '*' -> ToneGenerator.TONE_DTMF_S
+                '#' -> ToneGenerator.TONE_DTMF_P
+                else -> -1
+            }
+            if (toneType != -1) {
+                val tg = ToneGenerator(AudioManager.STREAM_MUSIC, 65)
+                tg.startTone(toneType, 140)
+                mainHandler.postDelayed({ try { tg.release() } catch (_: Exception) {} }, 180)
             }
         } catch (e: Exception) {
             e.printStackTrace()

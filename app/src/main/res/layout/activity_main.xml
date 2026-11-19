@@ -52,7 +52,7 @@
                     android:background="@drawable/bg_ai_pill"
                     android:paddingHorizontal="6dp"
                     android:paddingVertical="1dp"
-                    android:text="v1.6.6"
+                    android:text="v1.6.7"
                     android:textColor="#7DD3FC"
                     android:textSize="9sp"
                     android:textStyle="bold" />

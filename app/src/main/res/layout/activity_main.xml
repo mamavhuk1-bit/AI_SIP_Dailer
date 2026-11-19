@@ -25,9 +25,8 @@
             android:orientation="horizontal">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:orientation="vertical">
 
                 <LinearLayout
@@ -57,7 +56,7 @@
                         android:background="@drawable/bg_ai_pill"
                         android:paddingHorizontal="6dp"
                         android:paddingVertical="1dp"
-                        android:text="v1.6.2"
+                        android:text="v1.6.3"
                         android:textColor="#7DD3FC"
                         android:textSize="9sp"
                         android:textStyle="bold" />
@@ -73,6 +72,14 @@
                     android:textSize="10sp"
                     android:textStyle="bold" />
             </LinearLayout>
+
+            <!-- Kitten House, Food Bowl, Toy Ball & Kitten in Center Space -->
+            <com.sip.dialer.CuteKittenRoamView
+                android:id="@+id/kittenRoamView"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginHorizontal="6dp"
+                android:layout_weight="1" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -164,21 +171,15 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- CUTE ROAMING & SLEEPING KITTEN STRIP -->
-    <com.sip.dialer.CuteKittenRoamView
-        android:id="@+id/kittenRoamView"
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_below="@+id/topTelemetryCard"
-        android:layout_marginHorizontal="14dp"
-        android:layout_marginTop="2dp" />
+
 
     <!-- CONTENT CONTAINER -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/bottomGlassNav"
-        android:layout_below="@+id/kittenRoamView"
+        android:layout_below="@+id/topTelemetryCard"
+        android:layout_marginTop="6dp"
         android:paddingHorizontal="12dp"
         android:paddingBottom="4dp">
 
@@ -664,7 +665,7 @@
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ℹ️" android:textSize="22sp" />
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
                             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="About" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App v1.6.2 • Credits &amp; Developer Info" android:textColor="#BAE6FD" android:textSize="12sp" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="App v1.6.3 • Credits &amp; Developer Info" android:textColor="#BAE6FD" android:textSize="12sp" />
                         </LinearLayout>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
                     </LinearLayout>

@@ -1596,27 +1596,32 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateDtmfModeLabel() {
         val mode = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE).getInt("dtmf_mode", 0)
-        val tag = when (mode) { 1 -> "[RFC2833]"; 2 -> "[SIP-INFO]"; else -> "[DUAL]" }
-        if (!tvDtmfEntered.text.toString().contains("[")) {
-            tvDtmfEntered.text = "DTMF $tag (Tap to switch): "
-        } else {
-            val suffix = tvDtmfEntered.text.toString().substringAfter(": ", "")
-            tvDtmfEntered.text = "DTMF $tag (Tap to switch): $suffix"
+        val tag = when (mode) {
+            1 -> "[RFC2833-500ms]"
+            2 -> "[SIP-INFO]"
+            3 -> "[IN-BAND-TONE]"
+            else -> "[AUTO-ALL]"
         }
+        val suffix = tvDtmfEntered.text.toString().substringAfter(": ", "")
+        tvDtmfEntered.text = "DTMF $tag (Tap): $suffix"
     }
 
     private fun applyDtmfConfig() {
         val mode = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE).getInt("dtmf_mode", 0)
         when (mode) {
-            1 -> { // RFC 2833 Only
+            1 -> { // Pure RFC 2833
                 core.useRfc2833ForDtmf = true
                 core.useInfoForDtmf = false
             }
-            2 -> { // SIP INFO Only (Best for BD PSTN/Helpline Gateways)
+            2 -> { // Pure SIP INFO
                 core.useRfc2833ForDtmf = false
                 core.useInfoForDtmf = true
             }
-            else -> { // Dual Mode: RFC 2833 + SIP INFO
+            3 -> { // Pure In-Band Audio
+                core.useRfc2833ForDtmf = false
+                core.useInfoForDtmf = false
+            }
+            else -> { // Auto All
                 core.useRfc2833ForDtmf = true
                 core.useInfoForDtmf = true
             }
@@ -1627,13 +1632,36 @@ class MainActivity : AppCompatActivity() {
         try {
             val call = currentCall ?: return
             applyDtmfConfig()
-            // Send standard DTMF string (triggers full RFC2833 / SIP INFO packet)
-            call.sendDtmfs(digit.toString())
-            // Play audible local feedback tone for 350ms
-            core.playDtmf(digit, 350)
-            mainHandler.postDelayed({
-                try { core.stopDtmf() } catch (_: Exception) {}
-            }, 380)
+            val mode = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE).getInt("dtmf_mode", 0)
+
+            // 1. Send SIP signaling DTMF (RFC 2833 / SIP INFO) with 450ms spacing
+            if (mode != 3) {
+                call.sendDtmf(digit)
+            }
+
+            // 2. Also generate real dual-frequency DTMF audio through voice stream / speaker for In-Band gateways
+            if (mode == 0 || mode == 3) {
+                val toneType = when (digit) {
+                    '0' -> ToneGenerator.TONE_DTMF_0
+                    '1' -> ToneGenerator.TONE_DTMF_1
+                    '2' -> ToneGenerator.TONE_DTMF_2
+                    '3' -> ToneGenerator.TONE_DTMF_3
+                    '4' -> ToneGenerator.TONE_DTMF_4
+                    '5' -> ToneGenerator.TONE_DTMF_5
+                    '6' -> ToneGenerator.TONE_DTMF_6
+                    '7' -> ToneGenerator.TONE_DTMF_7
+                    '8' -> ToneGenerator.TONE_DTMF_8
+                    '9' -> ToneGenerator.TONE_DTMF_9
+                    '*' -> ToneGenerator.TONE_DTMF_S
+                    '#' -> ToneGenerator.TONE_DTMF_P
+                    else -> -1
+                }
+                if (toneType != -1) {
+                    val tg = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 95)
+                    tg.startTone(toneType, 450)
+                    mainHandler.postDelayed({ try { tg.release() } catch (_: Exception) {} }, 500)
+                }
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -1877,11 +1905,11 @@ class MainActivity : AppCompatActivity() {
         }
         tvDtmfEntered.setOnClickListener {
             val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
-            val nextMode = (prefs.getInt("dtmf_mode", 0) + 1) % 3
+            val nextMode = (prefs.getInt("dtmf_mode", 0) + 1) % 4
             prefs.edit().putInt("dtmf_mode", nextMode).apply()
             applyDtmfConfig()
             updateDtmfModeLabel()
-            val modeName = when (nextMode) { 1 -> "RFC 2833 Only"; 2 -> "SIP INFO Only"; else -> "Dual (RFC2833 + INFO)" }
+            val modeName = when (nextMode) { 1 -> "RFC 2833 Only (500ms)"; 2 -> "SIP INFO Only"; 3 -> "In-Band Audio"; else -> "Auto All" }
             Toast.makeText(this, "DTMF Mode: $modeName", Toast.LENGTH_SHORT).show()
         }
         btnInCallAddNote.setOnClickListener {

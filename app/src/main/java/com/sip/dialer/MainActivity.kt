@@ -1598,28 +1598,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun sendReliableDtmf(digit: Char) {
         try {
-            currentCall?.sendDtmf(digit)
-            val toneType = when (digit) {
-                '0' -> ToneGenerator.TONE_DTMF_0
-                '1' -> ToneGenerator.TONE_DTMF_1
-                '2' -> ToneGenerator.TONE_DTMF_2
-                '3' -> ToneGenerator.TONE_DTMF_3
-                '4' -> ToneGenerator.TONE_DTMF_4
-                '5' -> ToneGenerator.TONE_DTMF_5
-                '6' -> ToneGenerator.TONE_DTMF_6
-                '7' -> ToneGenerator.TONE_DTMF_7
-                '8' -> ToneGenerator.TONE_DTMF_8
-                '9' -> ToneGenerator.TONE_DTMF_9
-                '*' -> ToneGenerator.TONE_DTMF_S
-                '#' -> ToneGenerator.TONE_DTMF_P
-                else -> -1
-            }
-            if (toneType != -1) {
-                val tg = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 85)
-                tg.startTone(toneType, 180)
-                mainHandler.postDelayed({ try { tg.release() } catch (_: Exception) {} }, 250)
-            }
-        } catch (_: Exception) {}
+            val call = currentCall ?: return
+            // 1. Send out-of-band RFC 2833 RTP telephone-event
+            call.sendDtmf(digit)
+            // 2. Inject in-band DTMF audio directly into outgoing SIP voice stream (250ms)
+            core.playDtmf(digit, 250)
+            mainHandler.postDelayed({
+                try { core.stopDtmf() } catch (_: Exception) {}
+            }, 260)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun exportRecordingToPublicMusic(tempPath: String?) {
@@ -1752,7 +1741,14 @@ class MainActivity : AppCompatActivity() {
         factory.setDebugMode(false, "AISipDialer")
         core = factory.createCore(null, null, this)
         core.useRfc2833ForDtmf = true
-        core.useInfoForDtmf = true
+        core.useInfoForDtmf = false
+        for (pt in core.audioPayloadTypes) {
+            if (pt.mimeType.equals("telephone-event", ignoreCase = true) ||
+                pt.mimeType.equals("PCMU", ignoreCase = true) ||
+                pt.mimeType.equals("PCMA", ignoreCase = true)) {
+                pt.enable(true)
+            }
+        }
         core.addListener(coreListener)
         core.start()
     }

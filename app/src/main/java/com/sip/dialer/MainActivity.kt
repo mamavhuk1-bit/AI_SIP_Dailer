@@ -2413,4 +2413,147 @@ class MainActivity : AppCompatActivity() {
         }
         return null
     }
+
+    // =========================================================================
+    // THEME-MATCHED COLORFUL OUTGOING ACCOUNT CHOOSER DIALOG (v2.0.0)
+    // =========================================================================
+    private fun showThemedAccountChooserDialog(
+        targetNumber: String,
+        optionLabels: Array<String>,
+        onSelect: (Int) -> Unit
+    ) {
+        showThemedAccountChooserDialog(targetNumber, optionLabels.toList(), onSelect)
+    }
+
+    private fun showThemedAccountChooserDialog(
+        targetNumber: String,
+        optionLabels: List<String>,
+        onSelect: (Int) -> Unit
+    ) {
+        val dialog = android.app.Dialog(this)
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+
+        val cardBg = android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
+            intArrayOf(
+                Color.parseColor("#0F292E"),
+                Color.parseColor("#132A4A"),
+                Color.parseColor("#1E1B4B")
+            )
+        ).apply {
+            cornerRadius = 48f
+            setStroke(4, Color.parseColor("#38BDF8"))
+        }
+
+        val rootCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = cardBg
+            setPadding(44, 42, 44, 38)
+        }
+
+        val tvTitle = TextView(this).apply {
+            text = "📞 Call $targetNumber Using:"
+            setTextColor(Color.parseColor("#E0F2FE"))
+            textSize = 17.5f
+            setTypeface(null, Typeface.BOLD)
+            setPadding(6, 0, 6, 26)
+        }
+        rootCard.addView(tvTitle)
+
+        val pillGradients = listOf(
+            intArrayOf(Color.parseColor("#0D9488"), Color.parseColor("#0369A1")),
+            intArrayOf(Color.parseColor("#2563EB"), Color.parseColor("#4F46E5")),
+            intArrayOf(Color.parseColor("#7C3AED"), Color.parseColor("#DB2777")),
+            intArrayOf(Color.parseColor("#059669"), Color.parseColor("#0284C7"))
+        )
+
+        optionLabels.forEachIndexed { index, rawLabel ->
+            val colors = pillGradients[index % pillGradients.size]
+            val itemBg = android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+                colors
+            ).apply {
+                cornerRadius = 32f
+                setStroke(2, Color.parseColor("#7DD3FC"))
+            }
+
+            val parts = rawLabel.split("[")
+            val mainName = parts[0].trim()
+            val pingBadge = if (parts.size > 1) "[" + parts[1].trim() else ""
+
+            val itemRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                background = itemBg
+                setPadding(34, 28, 34, 28)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { setMargins(0, 0, 0, 20) }
+                isClickable = true
+                isFocusable = true
+                setOnClickListener {
+                    dialog.dismiss()
+                    onSelect(index)
+                }
+            }
+
+            val tvAccName = TextView(this).apply {
+                text = mainName
+                setTextColor(Color.WHITE)
+                textSize = 14.5f
+                setTypeface(null, Typeface.BOLD)
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            itemRow.addView(tvAccName)
+
+            if (pingBadge.isNotEmpty()) {
+                val badgeBg = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(Color.parseColor("#330F172A"))
+                    cornerRadius = 20f
+                }
+                val tvPing = TextView(this).apply {
+                    text = pingBadge
+                    setTextColor(Color.parseColor("#FDE047"))
+                    textSize = 12.5f
+                    setTypeface(null, Typeface.BOLD)
+                    background = badgeBg
+                    setPadding(18, 8, 18, 8)
+                }
+                itemRow.addView(tvPing)
+            }
+
+            rootCard.addView(itemRow)
+        }
+
+        val cancelBg = android.graphics.drawable.GradientDrawable().apply {
+            setColor(Color.parseColor("#33F43F5E"))
+            cornerRadius = 28f
+            setStroke(2, Color.parseColor("#FB7185"))
+        }
+        val btnCancel = TextView(this).apply {
+            text = "✖ CANCEL"
+            setTextColor(Color.parseColor("#FDA4AF"))
+            textSize = 13.5f
+            setTypeface(null, Typeface.BOLD)
+            gravity = android.view.Gravity.CENTER
+            background = cancelBg
+            setPadding(24, 24, 24, 24)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 10, 0, 0) }
+            setOnClickListener { dialog.dismiss() }
+        }
+        rootCard.addView(btnCancel)
+
+        dialog.setContentView(rootCard)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.90).toInt(),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        dialog.show()
+    }
+
 }

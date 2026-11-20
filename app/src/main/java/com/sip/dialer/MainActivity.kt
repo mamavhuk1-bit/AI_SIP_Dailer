@@ -2269,12 +2269,24 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    private var onBalanceFetchedCallback: ((String?) -> Unit)? = null
+
     @SuppressLint("SetJavaScriptEnabled")
-    private fun startPortalBalanceFetch(acc: org.json.JSONObject, accId: String, portalUrl: String, showBrowser: Boolean) {
-        val webView = findViewById<WebView>(R.id.webViewBalanceFetcher) ?: return
+    private fun startPortalBalanceFetch(
+        acc: org.json.JSONObject,
+        accId: String,
+        portalUrl: String,
+        showBrowser: Boolean,
+        onResult: ((String?) -> Unit)? = null
+    ) {
+        val webView = findViewById<WebView>(R.id.webViewBalanceFetcher) ?: run {
+            onResult?.invoke(null)
+            return
+        }
         val webContainer = findViewById<View>(R.id.layoutPortalWebContainer)
         val statusTv = findViewById<TextView>(R.id.tvBalanceFetchStatus)
 
+        onBalanceFetchedCallback = onResult
         val accUser = acc.optString("username", "")
         val accPass = acc.optString("password", "")
 
@@ -2287,9 +2299,17 @@ class MainActivity : AppCompatActivity() {
         val loginUser = prefs.getString("puser_$accId", "")?.ifEmpty { accUser } ?: accUser
         val loginPass = prefs.getString("ppass_$accId", "")?.ifEmpty { accPass } ?: accPass
 
-        CookieManager.getInstance().setAcceptCookie(true)
+        // Clear previous session cookies & storage so multiple accounts on the same SIP domain never mix!
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        webView.stopLoading()
+        webView.clearCache(true)
+        webView.clearHistory()
+        android.webkit.WebStorage.getInstance().deleteAllData()
+
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
+        webView.settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
         webView.settings.useWideViewPort = true
         webView.settings.loadWithOverviewMode = true
 
@@ -2301,7 +2321,11 @@ class MainActivity : AppCompatActivity() {
                 }, 1800)
             }
         }
-        webView.loadUrl(portalUrl)
+
+        cookieManager.removeAllCookies {
+            cookieManager.flush()
+            webView.loadUrl(portalUrl)
+        }
     }
 
     private fun extractBalanceOrAutoLogin(webView: WebView?, accId: String, user: String, pass: String) {
@@ -2323,7 +2347,11 @@ class MainActivity : AppCompatActivity() {
                     .putString("time_$accId", nowStr)
                     .apply()
                 statusTv?.text = "✅ Balance Fetched ($user): $detectedBdt BDT"
-                Toast.makeText(this, "💰 Balance: $detectedBdt BDT", Toast.LENGTH_LONG).show()
+                if (onBalanceFetchedCallback == null) {
+                    Toast.makeText(this, "💰 Balance: $detectedBdt BDT", Toast.LENGTH_LONG).show()
+                }
+                onBalanceFetchedCallback?.invoke("$detectedBdt BDT")
+                onBalanceFetchedCallback = null
                 renderBalanceAccountsList()
                 return@evaluateJavascript
             }
@@ -2366,6 +2394,50 @@ class MainActivity : AppCompatActivity() {
                 }
             } else {
                 statusTv?.text = "⚠️ Could not auto-read balance. Tap 🌐 View to check/login manually once."
+                onBalanceFetchedCallback?.invoke(null)
+                onBalanceFetchedCallback = null
+            }
+        }
+    }
+
+    private fun attachPostCallLiveBalance(container: android.view.ViewGroup, lineKeyOrLabel: String) {
+        val accounts = getSavedAccountsJsonList()
+        val matchedAcc = accounts.find { acc ->
+            val u = acc.optString("username", "")
+            val l = acc.optString("label", "")
+            (u.isNotEmpty() && lineKeyOrLabel.contains(u)) || (l.isNotEmpty() && lineKeyOrLabel.equals(l, ignoreCase = true))
+        } ?: accounts.firstOrNull() ?: return
+
+        val accId = matchedAcc.optString("id", "")
+        val prefs = getSharedPreferences("SipBalancePrefs", Context.MODE_PRIVATE)
+        val portalUrl = prefs.getString("url_$accId", "") ?: ""
+        val lastKnownBal = prefs.getString("bal_$accId", "") ?: ""
+
+        val tvBigBalance = TextView(this).apply {
+            text = when {
+                portalUrl.isEmpty() && lastKnownBal.isEmpty() -> "💰 Balance: URL not set"
+                portalUrl.isEmpty() -> "💰 Balance: $lastKnownBal"
+                else -> "💰 Balance: ⏳ Updating..."
+            }
+            setTextColor(Color.parseColor("#16A34A"))
+            textSize = 21f
+            setTypeface(null, Typeface.BOLD)
+            gravity = android.view.Gravity.CENTER
+            setPadding(16, 26, 16, 12)
+        }
+        container.addView(tvBigBalance)
+
+        if (portalUrl.isNotEmpty()) {
+            startPortalBalanceFetch(matchedAcc, accId, portalUrl, showBrowser = false) { newBal ->
+                runOnUiThread {
+                    if (newBal != null) {
+                        tvBigBalance.text = "💰 Balance: $newBal"
+                    } else if (lastKnownBal.isNotEmpty()) {
+                        tvBigBalance.text = "💰 Balance: $lastKnownBal"
+                    } else {
+                        tvBigBalance.text = "💰 Balance: Unavailable"
+                    }
+                }
             }
         }
     }

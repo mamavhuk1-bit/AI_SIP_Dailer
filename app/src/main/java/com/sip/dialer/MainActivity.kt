@@ -531,6 +531,36 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        
+        // Account Balance Checker Navigation & Click Listeners
+        findViewById<View>(R.id.cardMenuBalance)?.setOnClickListener {
+            try {
+                // Hide all known settings sub-views & menu home, show subBalance
+                val idsToHide = listOf(
+                    R.id.settingsMenuHome, R.id.subAbout, R.id.subCallingAccount,
+                    R.id.subSipAccounts, R.id.subThemes, R.id.subBackup
+                )
+                for (id in idsToHide) {
+                    try { findViewById<View>(id)?.visibility = View.GONE } catch (_: Exception) {}
+                }
+            } catch (_: Exception) {}
+            // Fallback: hide parent of cardMenuBalance if settingsMenuHome ID differs
+            (findViewById<View>(R.id.cardMenuBalance)?.parent as? View)?.visibility = View.GONE
+            findViewById<View>(R.id.subBalance)?.visibility = View.VISIBLE
+            renderBalanceAccountsList()
+        }
+
+        findViewById<View>(R.id.btnBackFromBalance)?.setOnClickListener {
+            findViewById<View>(R.id.layoutPortalWebContainer)?.visibility = View.GONE
+            findViewById<View>(R.id.subBalance)?.visibility = View.GONE
+            (findViewById<View>(R.id.cardMenuBalance)?.parent as? View)?.visibility = View.VISIBLE
+            try { findViewById<View>(R.id.settingsMenuHome)?.visibility = View.VISIBLE } catch (_: Exception) {}
+        }
+
+        findViewById<View>(R.id.btnClosePortalWeb)?.setOnClickListener {
+            findViewById<View>(R.id.layoutPortalWebContainer)?.visibility = View.GONE
+        }
+
         startLivePing()
     }
 

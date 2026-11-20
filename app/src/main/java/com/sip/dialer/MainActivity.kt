@@ -607,7 +607,7 @@ class MainActivity : AppCompatActivity() {
         subSipAccount = findViewById(R.id.subSipAccount)
         subUiThemes = findViewById(R.id.subUiThemes)
         subBackupRestore = findViewById(R.id.subBackupRestore)
-        subAbout = findViewById(R.id.subAbout, R.id.subBalance)
+        subAbout = findViewById(R.id.subAbout)
 
         tvCallingAccountSub = findViewById(R.id.tvCallingAccountSub)
         tvCurrentThemeSub = findViewById(R.id.tvCurrentThemeSub)

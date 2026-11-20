@@ -26,7 +26,6 @@ android {
 
     signingConfigs {
         release {
-            signingConfig signingConfigs.release
             storeFile file("my-release-key.jks")
             storePassword "123456"
             keyAlias "dialerkey"
@@ -36,7 +35,6 @@ android {
 
     buildTypes {
         debug {
-            signingConfig signingConfigs.release
         }
         release {
             signingConfig signingConfigs.release

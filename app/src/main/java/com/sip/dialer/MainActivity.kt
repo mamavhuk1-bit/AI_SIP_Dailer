@@ -1202,7 +1202,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         showThemedAccountChooserDialog(cleanNum, choices) { selectedIndex ->
-                val acc = accounts[selectedIndex]; startOutgoingCallWithAccount(number, acc)
+                dialWithSpecificAccount(cleanNum, accounts[selectedIndex])
             }
     }
 

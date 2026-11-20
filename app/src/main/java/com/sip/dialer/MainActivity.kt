@@ -1201,11 +1201,9 @@ class MainActivity : AppCompatActivity() {
             "📡 $lbl ($usr)  [⚡$ping]"
         }
 
-        AlertDialog.Builder(this)
-            .setTitle("📞 Call $cleanNum Using:")
-            .setItems(choices) { _, which -> dialWithSpecificAccount(cleanNum, accounts.getJSONObject(which)) }
-            .setNegativeButton("Cancel", null)
-            .show()
+        showThemedAccountChooserDialog(cleanNum, choices) { selectedIndex ->
+                val acc = accounts[selectedIndex]; startOutgoingCallWithAccount(number, acc)
+            }
     }
 
     private fun dialWithSpecificAccount(destination: String, accJson: JSONObject) {
@@ -1542,8 +1540,6 @@ class MainActivity : AppCompatActivity() {
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         btnOk.setOnClickListener { dialog.dismiss() }
         dialog.show()
-
-        attachPostCallLiveBalance(card, activeCallLineKey.ifEmpty { activeCallLineLabel })
         card.scaleX = 0.75f
         card.scaleY = 0.75f
         card.alpha = 0f
@@ -2401,7 +2397,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun attachPostCallLiveBalance(container: android.view.ViewGroup, lineKeyOrLabel: String) {
+    private fun
+ {
         val accounts = getSavedAccountsJsonList()
         val matchedAcc = accounts.find { acc ->
             val u = acc.optString("username", "")

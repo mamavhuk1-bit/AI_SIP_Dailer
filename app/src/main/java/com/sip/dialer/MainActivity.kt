@@ -2046,13 +2046,28 @@ class MainActivity : AppCompatActivity() {
     // =========================================================================
     // SMART SIP PORTAL AUTO-LOGIN & BDT BALANCE FETCHER (AmarIP, ICC & Custom)
     // =========================================================================
-    private var activeBalanceCheckIndex = -1
     private var loginAttemptedForCurrentFetch = false
+
+    private fun getSavedAccountsJsonList(): List<org.json.JSONObject> {
+        val list = mutableListOf<org.json.JSONObject>()
+        try {
+            val prefs = getSharedPreferences("SipPrefs", Context.MODE_PRIVATE)
+            val arr = org.json.JSONArray(prefs.getString("multi_accounts", "[]") ?: "[]")
+            for (i in 0 until arr.length()) {
+                val obj = arr.optJSONObject(i) ?: continue
+                if (!obj.has("id") || obj.optString("id").isEmpty()) {
+                    obj.put("id", "${obj.optString("username")}_${obj.optString("domain")}_$i")
+                }
+                list.add(obj)
+            }
+        } catch (_: Exception) {}
+        return list
+    }
 
     private fun renderBalanceAccountsList() {
         val container = findViewById<LinearLayout>(R.id.containerBalanceAccounts) ?: return
         container.removeAllViews()
-        val accounts = getSavedAccounts()
+        val accounts = getSavedAccountsJsonList()
         val prefs = getSharedPreferences("SipBalancePrefs", Context.MODE_PRIVATE)
 
         if (accounts.isEmpty()) {
@@ -2069,10 +2084,13 @@ class MainActivity : AppCompatActivity() {
         val ordinals = arrayOf("1st Account", "2nd Account", "3rd Account", "4th Account", "5th Account", "6th Account")
 
         accounts.forEachIndexed { idx, acc ->
+            val accId = acc.optString("id", "acc_$idx")
+            val accLabel = acc.optString("label", "")
+            val accUser = acc.optString("username", "")
             val labelTitle = if (idx < ordinals.size) ordinals[idx] else "${idx + 1}th Account"
-            val savedUrl = prefs.getString("url_${acc.id}", "") ?: ""
-            val savedBal = prefs.getString("bal_${acc.id}", "Not checked yet") ?: "Not checked yet"
-            val savedTime = prefs.getString("time_${acc.id}", "") ?: ""
+            val savedUrl = prefs.getString("url_$accId", "") ?: ""
+            val savedBal = prefs.getString("bal_$accId", "Not checked yet") ?: "Not checked yet"
+            val savedTime = prefs.getString("time_$accId", "") ?: ""
 
             val card = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
@@ -2090,7 +2108,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             val tvAccTitle = TextView(this).apply {
-                text = "🔹 $labelTitle (${acc.label.ifEmpty { acc.username }})"
+                text = "🔹 $labelTitle (${accLabel.ifEmpty { accUser }})"
                 setTextColor(Color.WHITE)
                 textSize = 14.5f
                 setTypeface(null, Typeface.BOLD)
@@ -2111,7 +2129,7 @@ class MainActivity : AppCompatActivity() {
             val tvUserAndUrl = TextView(this).apply {
                 val urlDisplay = if (savedUrl.isEmpty()) "⚠️ Portal URL not set" else "🌐 $savedUrl"
                 val timeDisplay = if (savedTime.isNotEmpty()) " • Updated: $savedTime" else ""
-                text = "User: ${acc.username}\n$urlDisplay$timeDisplay"
+                text = "User: $accUser\n$urlDisplay$timeDisplay"
                 setTextColor(Color.parseColor("#BAE6FD"))
                 textSize = 11.5f
                 setPadding(0, 10, 0, 14)
@@ -2129,7 +2147,7 @@ class MainActivity : AppCompatActivity() {
                 setTextColor(Color.WHITE)
                 setBackgroundResource(R.drawable.bg_ai_pill)
                 layoutParams = LinearLayout.LayoutParams(0, 96, 1f).apply { setMargins(0, 0, 10, 0) }
-                setOnClickListener { showEditBalancePortalDialog(acc, labelTitle) }
+                setOnClickListener { showEditBalancePortalDialog(acc, accId, labelTitle) }
             }
 
             val btnFetch = Button(this).apply {
@@ -2142,9 +2160,9 @@ class MainActivity : AppCompatActivity() {
                 setOnClickListener {
                     if (savedUrl.isEmpty()) {
                         Toast.makeText(this@MainActivity, "Please tap Edit Link and save the website URL first!", Toast.LENGTH_SHORT).show()
-                        showEditBalancePortalDialog(acc, labelTitle)
+                        showEditBalancePortalDialog(acc, accId, labelTitle)
                     } else {
-                        startPortalBalanceFetch(idx, acc, savedUrl, showBrowser = false)
+                        startPortalBalanceFetch(acc, accId, savedUrl, showBrowser = false)
                     }
                 }
             }
@@ -2158,9 +2176,9 @@ class MainActivity : AppCompatActivity() {
                 layoutParams = LinearLayout.LayoutParams(0, 96, 0.8f)
                 setOnClickListener {
                     if (savedUrl.isEmpty()) {
-                        showEditBalancePortalDialog(acc, labelTitle)
+                        showEditBalancePortalDialog(acc, accId, labelTitle)
                     } else {
-                        startPortalBalanceFetch(idx, acc, savedUrl, showBrowser = true)
+                        startPortalBalanceFetch(acc, accId, savedUrl, showBrowser = true)
                     }
                 }
             }
@@ -2174,8 +2192,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showEditBalancePortalDialog(acc: SipAccount, labelTitle: String) {
+    private fun showEditBalancePortalDialog(acc: org.json.JSONObject, accId: String, labelTitle: String) {
         val prefs = getSharedPreferences("SipBalancePrefs", Context.MODE_PRIVATE)
+        val accUser = acc.optString("username", "")
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(45, 30, 45, 10)
@@ -2183,18 +2202,18 @@ class MainActivity : AppCompatActivity() {
 
         val etUrl = EditText(this).apply {
             hint = "Portal URL (e.g. https://amarip.net or https://icctalk.com)"
-            setText(prefs.getString("url_${acc.id}", ""))
+            setText(prefs.getString("url_$accId", ""))
             inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI
         }
 
         val etPortalUser = EditText(this).apply {
-            hint = "Portal Login User (Leave blank to use SIP User: ${acc.username})"
-            setText(prefs.getString("puser_${acc.id}", ""))
+            hint = "Portal Login User (Leave blank to use SIP User: $accUser)"
+            setText(prefs.getString("puser_$accId", ""))
         }
 
         val etPortalPass = EditText(this).apply {
             hint = "Portal Password (Leave blank to use SIP Password)"
-            setText(prefs.getString("ppass_${acc.id}", ""))
+            setText(prefs.getString("ppass_$accId", ""))
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
 
@@ -2211,9 +2230,9 @@ class MainActivity : AppCompatActivity() {
                     url = "https://$url"
                 }
                 prefs.edit()
-                    .putString("url_${acc.id}", url)
-                    .putString("puser_${acc.id}", etPortalUser.text.toString().trim())
-                    .putString("ppass_${acc.id}", etPortalPass.text.toString().trim())
+                    .putString("url_$accId", url)
+                    .putString("puser_$accId", etPortalUser.text.toString().trim())
+                    .putString("ppass_$accId", etPortalPass.text.toString().trim())
                     .apply()
                 renderBalanceAccountsList()
                 Toast.makeText(this, "Portal URL Saved!", Toast.LENGTH_SHORT).show()
@@ -2223,20 +2242,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun startPortalBalanceFetch(idx: Int, acc: SipAccount, portalUrl: String, showBrowser: Boolean) {
+    private fun startPortalBalanceFetch(acc: org.json.JSONObject, accId: String, portalUrl: String, showBrowser: Boolean) {
         val webView = findViewById<WebView>(R.id.webViewBalanceFetcher) ?: return
         val webContainer = findViewById<View>(R.id.layoutPortalWebContainer)
         val statusTv = findViewById<TextView>(R.id.tvBalanceFetchStatus)
 
-        webContainer?.visibility = if (showBrowser) View.VISIBLE else View.GONE
-        statusTv?.text = "⏳ Connecting to $portalUrl & logging in as ${acc.username}..."
+        val accUser = acc.optString("username", "")
+        val accPass = acc.optString("password", "")
 
-        activeBalanceCheckIndex = idx
+        webContainer?.visibility = if (showBrowser) View.VISIBLE else View.GONE
+        statusTv?.text = "⏳ Connecting to $portalUrl & logging in as $accUser..."
+
         loginAttemptedForCurrentFetch = false
 
         val prefs = getSharedPreferences("SipBalancePrefs", Context.MODE_PRIVATE)
-        val loginUser = prefs.getString("puser_${acc.id}", "")?.ifEmpty { acc.username } ?: acc.username
-        val loginPass = prefs.getString("ppass_${acc.id}", "")?.ifEmpty { acc.password } ?: acc.password
+        val loginUser = prefs.getString("puser_$accId", "")?.ifEmpty { accUser } ?: accUser
+        val loginPass = prefs.getString("ppass_$accId", "")?.ifEmpty { accPass } ?: accPass
 
         CookieManager.getInstance().setAcceptCookie(true)
         webView.settings.javaScriptEnabled = true
@@ -2248,14 +2269,14 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 mainHandler.postDelayed({
-                    extractBalanceOrAutoLogin(view, acc, loginUser, loginPass)
+                    extractBalanceOrAutoLogin(view, accId, loginUser, loginPass)
                 }, 1800)
             }
         }
         webView.loadUrl(portalUrl)
     }
 
-    private fun extractBalanceOrAutoLogin(webView: WebView?, acc: SipAccount, user: String, pass: String) {
+    private fun extractBalanceOrAutoLogin(webView: WebView?, accId: String, user: String, pass: String) {
         if (webView == null) return
         val statusTv = findViewById<TextView>(R.id.tvBalanceFetchStatus)
 
@@ -2270,10 +2291,10 @@ class MainActivity : AppCompatActivity() {
             if (detectedBdt != null) {
                 val nowStr = java.text.SimpleDateFormat("hh:mm a", Locale.US).format(java.util.Date())
                 getSharedPreferences("SipBalancePrefs", Context.MODE_PRIVATE).edit()
-                    .putString("bal_${acc.id}", "$detectedBdt BDT")
-                    .putString("time_${acc.id}", nowStr)
+                    .putString("bal_$accId", "$detectedBdt BDT")
+                    .putString("time_$accId", nowStr)
                     .apply()
-                statusTv?.text = "✅ Balance Fetched (${acc.username}): $detectedBdt BDT"
+                statusTv?.text = "✅ Balance Fetched ($user): $detectedBdt BDT"
                 Toast.makeText(this, "💰 Balance: $detectedBdt BDT", Toast.LENGTH_LONG).show()
                 renderBalanceAccountsList()
                 return@evaluateJavascript
@@ -2312,7 +2333,7 @@ class MainActivity : AppCompatActivity() {
                 """
                 webView.evaluateJavascript(autoLoginJs) {
                     mainHandler.postDelayed({
-                        extractBalanceOrAutoLogin(webView, acc, user, pass)
+                        extractBalanceOrAutoLogin(webView, accId, user, pass)
                     }, 3500)
                 }
             } else {
@@ -2336,5 +2357,4 @@ class MainActivity : AppCompatActivity() {
         }
         return null
     }
-
 }

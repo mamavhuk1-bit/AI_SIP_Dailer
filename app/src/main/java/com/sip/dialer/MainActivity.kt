@@ -1202,7 +1202,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         showThemedAccountChooserDialog(cleanNum, choices) { selectedIndex ->
-                dialWithSpecificAccount(cleanNum, accounts[selectedIndex])
+                val targetAcc = getSavedAccountsJsonList().getOrNull(selectedIndex)
+                if (targetAcc != null) dialWithSpecificAccount(cleanNum, targetAcc)
             }
     }
 

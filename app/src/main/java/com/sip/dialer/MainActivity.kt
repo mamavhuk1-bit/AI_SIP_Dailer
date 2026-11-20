@@ -1543,6 +1543,7 @@ class MainActivity : AppCompatActivity() {
         btnOk.setOnClickListener { dialog.dismiss() }
         dialog.show()
 
+        attachPostCallLiveBalance(card, activeCallLineKey.ifEmpty { activeCallLineLabel })
         card.scaleX = 0.75f
         card.scaleY = 0.75f
         card.alpha = 0f

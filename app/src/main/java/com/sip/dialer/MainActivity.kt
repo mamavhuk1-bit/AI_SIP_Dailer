@@ -2400,46 +2400,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun
  {
-        val accounts = getSavedAccountsJsonList()
-        val matchedAcc = accounts.find { acc ->
-            val u = acc.optString("username", "")
-            val l = acc.optString("label", "")
-            (u.isNotEmpty() && lineKeyOrLabel.contains(u)) || (l.isNotEmpty() && lineKeyOrLabel.equals(l, ignoreCase = true))
-        } ?: accounts.firstOrNull() ?: return
-
-        val accId = matchedAcc.optString("id", "")
-        val prefs = getSharedPreferences("SipBalancePrefs", Context.MODE_PRIVATE)
-        val portalUrl = prefs.getString("url_$accId", "") ?: ""
-        val lastKnownBal = prefs.getString("bal_$accId", "") ?: ""
-
-        val tvBigBalance = TextView(this).apply {
-            text = when {
-                portalUrl.isEmpty() && lastKnownBal.isEmpty() -> "💰 Balance: URL not set"
-                portalUrl.isEmpty() -> "💰 Balance: $lastKnownBal"
-                else -> "💰 Balance: ⏳ Updating..."
-            }
-            setTextColor(Color.parseColor("#16A34A"))
-            textSize = 21f
-            setTypeface(null, Typeface.BOLD)
-            gravity = android.view.Gravity.CENTER
-            setPadding(16, 26, 16, 12)
-        }
-        container.addView(tvBigBalance)
-
-        if (portalUrl.isNotEmpty()) {
-            startPortalBalanceFetch(matchedAcc, accId, portalUrl, showBrowser = false) { newBal ->
-                runOnUiThread {
-                    if (newBal != null) {
-                        tvBigBalance.text = "💰 Balance: $newBal"
-                    } else if (lastKnownBal.isNotEmpty()) {
-                        tvBigBalance.text = "💰 Balance: $lastKnownBal"
-                    } else {
-                        tvBigBalance.text = "💰 Balance: Unavailable"
-                    }
-                }
-            }
-        }
-    }
 
     private fun parseBdtBalanceFromText(text: String): String? {
         if (text.isBlank()) return null

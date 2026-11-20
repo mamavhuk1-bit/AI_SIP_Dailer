@@ -244,9 +244,9 @@
 
     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Google Cloud Auto-Backup" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Cloud Auto-Backup (Email Sync)" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
 
-        <TextView android:id="@+id/tvGoogleBackupStatusSub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tap to connect Google Account for auto-sync" android:textColor="#7DD3FC" android:textSize="12sp" />
+        <TextView android:id="@+id/tvGoogleBackupStatusSub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tap to sign in with Email for auto cloud backup" android:textColor="#7DD3FC" android:textSize="12sp" />
     </LinearLayout>
 
     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#7DD3FC" android:textSize="16sp" android:textStyle="bold" />

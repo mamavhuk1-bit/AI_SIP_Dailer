@@ -2398,9 +2398,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun
- {
-
     private fun parseBdtBalanceFromText(text: String): String? {
         if (text.isBlank()) return null
         val patterns = listOf(

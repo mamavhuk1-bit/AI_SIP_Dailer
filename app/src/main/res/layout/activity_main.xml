@@ -1,220 +1,67 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/rootContainer"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/bg_theme_luminous">
+<?xml version='1.0' encoding='utf-8'?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/rootContainer" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_theme_luminous">
 
-    <!-- TOP AI TELEMETRY HUD -->
-    <LinearLayout
-        android:id="@+id/topTelemetryCard"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="12dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_ai_card"
-        android:orientation="vertical"
-        android:paddingHorizontal="11dp"
-        android:paddingVertical="6dp">
+    
+    <LinearLayout android:id="@+id/topTelemetryCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="12dp" android:layout_marginTop="8dp" android:background="@drawable/bg_ai_card" android:orientation="vertical" android:paddingHorizontal="11dp" android:paddingVertical="6dp">
 
-        <!-- Row 1A: Top Line -> Logo/Title (Left) + Wide Kitten Playground (Center) + Flag (Right) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+        
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingBottom="3dp">
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" android:paddingBottom="3dp">
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_app_logo" />
+                <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_app_logo" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="5dp"
-                    android:text="AI SIP Dialer"
-                    android:textColor="#FFFFFF"
-                    android:textSize="13.5sp"
-                    android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="5dp" android:text="AI SIP Dialer" android:textColor="#FFFFFF" android:textSize="13.5sp" android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tvTopVersionBadge"
-                        android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="5dp"
-                    android:background="@drawable/bg_ai_pill"
-                    android:paddingHorizontal="6dp"
-                    android:paddingVertical="1dp"
-                    android:text="v1.6.9"
-                    android:textColor="#7DD3FC"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
+                <TextView android:id="@+id/tvTopVersionBadge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="5dp" android:background="@drawable/bg_ai_pill" android:paddingHorizontal="6dp" android:paddingVertical="1dp" android:text="v1.6.9" android:textColor="#7DD3FC" android:textSize="9sp" android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Wide Kitten House, Food Bowl, Toy Ball & Kitten right between Title & Flag -->
-            <com.sip.dialer.CuteKittenRoamView
-                android:id="@+id/kittenRoamView"
-                android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_marginHorizontal="6dp"
-                android:layout_weight="1" />
+            
+            <com.sip.dialer.CuteKittenRoamView android:id="@+id/kittenRoamView" android:layout_width="0dp" android:layout_height="36dp" android:layout_marginHorizontal="6dp" android:layout_weight="1" />
 
-            <com.sip.dialer.WavingBdFlagView
-                android:id="@+id/wavingBdFlag"
-                android:layout_width="38dp"
-                android:layout_height="25dp" />
+            <com.sip.dialer.WavingBdFlagView android:id="@+id/wavingBdFlag" android:layout_width="38dp" android:layout_height="25dp" />
         </LinearLayout>
 
-        <!-- Row 1B: Second Line -> AI Engine Status (Left) & Live Clock/Date (Right) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+        
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:gravity="center_vertical" android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tvAiLiveEngineStatus"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="✨ AI VoIP Engine Active"
-                android:textColor="#6EE7B7"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+            <TextView android:id="@+id/tvAiLiveEngineStatus" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="✨ AI VoIP Engine Active" android:textColor="#6EE7B7" android:textSize="10sp" android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tvLiveClockDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🕒 12:00:00 AM • 19 Nov 2026"
-                android:textColor="#FDE047"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+            <TextView android:id="@+id/tvLiveClockDate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🕒 12:00:00 AM • 19 Nov 2026" android:textColor="#FDE047" android:textSize="10sp" android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Row 2: Multi-SIP Simultaneous Status & Ping Strip -->
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:scrollbars="none">
+        
+        <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:scrollbars="none">
 
-            <LinearLayout
-                android:id="@+id/layoutMultiPingStrip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal" />
+            <LinearLayout android:id="@+id/layoutMultiPingStrip" android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal" />
         </HorizontalScrollView>
 
-        <!-- Row 3: Compact Single-Line Network Type + IP + ISP + Refresh -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+        
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:gravity="center_vertical" android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tvNetworkType"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_ai_pill"
-                android:paddingHorizontal="7dp"
-                android:paddingVertical="2dp"
-                android:text="📡 Net"
-                android:textColor="#FFFFFF"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+            <TextView android:id="@+id/tvNetworkType" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_ai_pill" android:paddingHorizontal="7dp" android:paddingVertical="2dp" android:text="📡 Net" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tvPublicIp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:text="🌐 IP: ..."
-                android:textColor="#F0F9FF"
-                android:textSize="10sp" />
+            <TextView android:id="@+id/tvPublicIp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:text="🌐 IP: ..." android:textColor="#F0F9FF" android:textSize="10sp" />
 
-            <TextView
-                android:id="@+id/tvIspName"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="• ISP: ..."
-                android:textColor="#BAE6FD"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+            <TextView android:id="@+id/tvIspName" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1" android:ellipsize="end" android:maxLines="1" android:text="• ISP: ..." android:textColor="#BAE6FD" android:textSize="10sp" android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/btnRefreshNet"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingStart="6dp"
-                android:text="🔄"
-                android:textSize="13sp" />
+            <TextView android:id="@+id/btnRefreshNet" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingStart="6dp" android:text="🔄" android:textSize="13sp" />
         </LinearLayout>
     </LinearLayout>
 
 
 
-    <!-- CONTENT CONTAINER -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/bottomGlassNav"
-        android:layout_below="@+id/topTelemetryCard"
-        android:layout_marginTop="6dp"
-        android:paddingHorizontal="12dp"
-        android:paddingBottom="4dp">
+    
+    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:layout_above="@+id/bottomGlassNav" android:layout_below="@+id/topTelemetryCard" android:layout_marginTop="6dp" android:paddingHorizontal="12dp" android:paddingBottom="4dp">
 
-        <!-- 1. KEYPAD TAB -->
-        <ScrollView
-            android:id="@+id/tabKeypadView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true">
+        
+        <ScrollView android:id="@+id/tabKeypadView" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:orientation="vertical">
 
-                <EditText
-                    android:id="@+id/etDialNumber"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="2dp"
-                    android:background="@android:color/transparent"
-                    android:gravity="center"
-                    android:hint="Enter Number"
-                    android:inputType="phone"
-                    android:maxLines="1"
-                    android:textColor="#FFFFFF"
-                    android:textColorHint="#99FFFFFF"
-                    android:textSize="29sp"
-                    android:textStyle="bold" />
+                <EditText android:id="@+id/etDialNumber" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="2dp" android:background="@android:color/transparent" android:gravity="center" android:hint="Enter Number" android:inputType="phone" android:maxLines="1" android:textColor="#FFFFFF" android:textColorHint="#99FFFFFF" android:textSize="29sp" android:textStyle="bold" />
 
-                <GridLayout
-                    android:id="@+id/dialpadGrid"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:columnCount="3"
-                    android:rowCount="4">
+                <GridLayout android:id="@+id/dialpadGrid" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:columnCount="3" android:rowCount="4">
 
                     <Button android:id="@+id/btn1" android:layout_width="68dp" android:layout_height="68dp" android:layout_margin="5dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="1" android:textColor="#FFFFFF" android:textSize="21sp" />
                     <Button android:id="@+id/btn2" android:layout_width="68dp" android:layout_height="68dp" android:layout_margin="5dp" android:background="@drawable/bg_dial_btn" android:lineSpacingExtra="-2dp" android:text="2\nABC" android:textColor="#FFFFFF" android:textSize="17sp" />
@@ -233,144 +80,38 @@
                     <Button android:id="@+id/btnHash" android:layout_width="68dp" android:layout_height="68dp" android:layout_margin="5dp" android:background="@drawable/bg_dial_btn" android:text="#" android:textColor="#FFFFFF" android:textSize="23sp" />
                 </GridLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:gravity="center"
-                    android:orientation="horizontal">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center" android:orientation="horizontal">
 
-                    <Button
-                        android:id="@+id/btnRecordingsList"
-                        android:layout_width="88dp"
-                        android:layout_height="44dp"
-                        android:layout_marginEnd="18dp"
-                        android:background="@drawable/bg_ai_pill"
-                        android:paddingHorizontal="6dp"
-                        android:text="🎧 Recs"
-                        android:textAllCaps="false"
-                        android:textColor="#FFFFFF"
-                        android:textSize="11.5sp" />
+                    <Button android:id="@+id/btnRecordingsList" android:layout_width="88dp" android:layout_height="44dp" android:layout_marginEnd="18dp" android:background="@drawable/bg_ai_pill" android:paddingHorizontal="6dp" android:text="🎧 Recs" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11.5sp" />
 
-                    <Button
-                        android:id="@+id/btnMakeCall"
-                        android:layout_width="70dp"
-                        android:layout_height="70dp"
-                        android:background="@drawable/bg_call_btn"
-                        android:text="📞"
-                        android:textColor="#FFFFFF"
-                        android:textSize="27sp" />
+                    <Button android:id="@+id/btnMakeCall" android:layout_width="70dp" android:layout_height="70dp" android:background="@drawable/bg_call_btn" android:text="📞" android:textColor="#FFFFFF" android:textSize="27sp" />
 
-                    <Button
-                        android:id="@+id/btnBackspace"
-                        android:layout_width="88dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="18dp"
-                        android:background="@drawable/bg_ai_pill"
-                        android:text="⌫"
-                        android:textColor="#FFFFFF"
-                        android:textSize="18sp" />
+                    <Button android:id="@+id/btnBackspace" android:layout_width="88dp" android:layout_height="44dp" android:layout_marginStart="18dp" android:background="@drawable/bg_ai_pill" android:text="⌫" android:textColor="#FFFFFF" android:textSize="18sp" />
                 </LinearLayout>
             </LinearLayout>
         </ScrollView>
 
-        <!-- 2. DEDICATED IN-CALL SCREEN -->
-        <LinearLayout
-            android:id="@+id/layoutActiveCallScreen"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/bg_ai_card"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="14dp"
-            android:visibility="gone">
+        
+        <LinearLayout android:id="@+id/layoutActiveCallScreen" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_ai_card" android:gravity="center" android:orientation="vertical" android:padding="14dp" android:visibility="gone">
 
-            <TextView
-                android:id="@+id/tvInCallAccountBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_ai_pill"
-                android:paddingHorizontal="14dp"
-                android:paddingVertical="4dp"
-                android:text="📡 Line: Primary SIP"
-                android:textColor="#7DD3FC"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+            <TextView android:id="@+id/tvInCallAccountBadge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_ai_pill" android:paddingHorizontal="14dp" android:paddingVertical="4dp" android:text="📡 Line: Primary SIP" android:textColor="#7DD3FC" android:textSize="12sp" android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="68dp"
-                android:layout_height="68dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_dial_btn"
-                android:gravity="center"
-                android:text="👤"
-                android:textSize="30sp" />
+            <TextView android:layout_width="68dp" android:layout_height="68dp" android:layout_marginTop="8dp" android:background="@drawable/bg_dial_btn" android:gravity="center" android:text="👤" android:textSize="30sp" />
 
-            <TextView
-                android:id="@+id/tvInCallName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Caller Name"
-                android:textColor="#FFFFFF"
-                android:textSize="21sp"
-                android:textStyle="bold" />
+            <TextView android:id="@+id/tvInCallName" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Caller Name" android:textColor="#FFFFFF" android:textSize="21sp" android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tvInCallNumber"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="017XXXXXXXX"
-                android:textColor="#E0F2FE"
-                android:textSize="14sp" />
+            <TextView android:id="@+id/tvInCallNumber" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="017XXXXXXXX" android:textColor="#E0F2FE" android:textSize="14sp" />
 
-            <TextView
-                android:id="@+id/tvInCallStatusTimer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:background="@drawable/bg_ai_pill"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="4dp"
-                android:text="⏱ 00:00"
-                android:textColor="#FDE047"
-                android:textSize="17sp"
-                android:textStyle="bold" />
+            <TextView android:id="@+id/tvInCallStatusTimer" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:background="@drawable/bg_ai_pill" android:paddingHorizontal="16dp" android:paddingVertical="4dp" android:text="⏱ 00:00" android:textColor="#FDE047" android:textSize="17sp" android:textStyle="bold" />
 
-            <LinearLayout
-                android:id="@+id/layoutInCallDtmf"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:background="#660F172A"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="10dp"
-                android:visibility="gone">
+            <LinearLayout android:id="@+id/layoutInCallDtmf" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:background="#660F172A" android:gravity="center" android:orientation="vertical" android:padding="10dp" android:visibility="gone">
 
-                <TextView
-                    android:id="@+id/tvDtmfEntered"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="DTMF: "
-                    android:textColor="#7DD3FC"
-                    android:textSize="12sp" />
+                <TextView android:id="@+id/tvDtmfEntered" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="DTMF: " android:textColor="#7DD3FC" android:textSize="12sp" />
 
-                <GridLayout
-                    android:id="@+id/gridInCallDtmf"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:columnCount="3" />
+                <GridLayout android:id="@+id/gridInCallDtmf" android:layout_width="wrap_content" android:layout_height="wrap_content" android:columnCount="3" />
             </LinearLayout>
 
-            <GridLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:columnCount="3"
-                android:rowCount="2">
+            <GridLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:columnCount="3" android:rowCount="2">
 
                 <Button android:id="@+id/btnMute" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:layout_margin="4dp" android:background="@drawable/bg_ai_pill" android:text="🔇\nMute" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
                 <Button android:id="@+id/btnHold" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:layout_margin="4dp" android:background="@drawable/bg_ai_pill" android:text="⏸️\nHold" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
@@ -380,83 +121,29 @@
                 <Button android:id="@+id/btnInCallAddNote" android:layout_width="0dp" android:layout_height="48dp" android:layout_columnWeight="1" android:layout_margin="4dp" android:background="@drawable/bg_ai_pill" android:text="📊\nPing/MOS" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
             </GridLayout>
 
-            <Button
-                android:id="@+id/btnEndCall"
-                android:layout_width="175dp"
-                android:layout_height="54dp"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/bg_end_call_btn"
-                android:text="📵  End Call"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+            <Button android:id="@+id/btnEndCall" android:layout_width="175dp" android:layout_height="54dp" android:layout_marginTop="10dp" android:background="@drawable/bg_end_call_btn" android:text="📵  End Call" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- 3. CALL ANALYTICS & HISTORY TABLE TAB -->
-        <LinearLayout
-            android:id="@+id/tabRecentsView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/bg_ai_card"
-            android:orientation="vertical"
-            android:padding="12dp"
-            android:visibility="gone">
+        
+        <LinearLayout android:id="@+id/tabRecentsView" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_ai_card" android:orientation="vertical" android:padding="12dp" android:visibility="gone">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="📊 Call History (Tap for Details)"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="📊 Call History (Tap for Details)" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/btnClearHistory"
-                    android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:backgroundTint="#EF4444"
-                    android:text="🗑️ Clear"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp" />
+                <Button android:id="@+id/btnClearHistory" android:layout_width="wrap_content" android:layout_height="48dp" android:backgroundTint="#EF4444" android:text="🗑️ Clear" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="10dp"
-                android:layout_marginTop="8dp"
-                android:background="#330F172A"
-                android:orientation="horizontal">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="10dp" android:layout_marginTop="8dp" android:background="#330F172A" android:orientation="horizontal">
 
                 <View android:id="@+id/barMissed" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="#F87171" />
                 <View android:id="@+id/barDialed" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="#38BDF8" />
                 <View android:id="@+id/barReceived" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="#34D399" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvChartLegend"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:gravity="center"
-                android:text="❌ Missed: 0   |   📤 Dialed: 0   |   📥 Received: 0"
-                android:textColor="#E0F2FE"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+            <TextView android:id="@+id/tvChartLegend" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:gravity="center" android:text="❌ Missed: 0   |   📤 Dialed: 0   |   📥 Received: 0" android:textColor="#E0F2FE" android:textSize="11sp" android:textStyle="bold" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="36dp"
-                android:layout_marginTop="6dp"
-                android:orientation="horizontal">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="36dp" android:layout_marginTop="6dp" android:orientation="horizontal">
 
                 <Button android:id="@+id/tabFilterAll" android:layout_width="0dp" android:layout_height="match_parent" android:layout_marginEnd="3dp" android:layout_weight="1" android:backgroundTint="#38BDF8" android:text="All" android:textAllCaps="false" android:textColor="#0F172A" android:textSize="11sp" />
                 <Button android:id="@+id/tabFilterMissed" android:layout_width="0dp" android:layout_height="match_parent" android:layout_marginHorizontal="3dp" android:layout_weight="1" android:backgroundTint="#1E293B" android:text="Missed" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
@@ -464,14 +151,7 @@
                 <Button android:id="@+id/tabFilterReceived" android:layout_width="0dp" android:layout_height="match_parent" android:layout_marginStart="3dp" android:layout_weight="1" android:backgroundTint="#1E293B" android:text="Received" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="11sp" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:background="#440F172A"
-                android:orientation="horizontal"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="6dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:background="#440F172A" android:orientation="horizontal" android:paddingHorizontal="8dp" android:paddingVertical="6dp">
 
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.85" android:text="Type" android:textColor="#7DD3FC" android:textSize="11sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.6" android:text="Caller / Line" android:textColor="#7DD3FC" android:textSize="11sp" android:textStyle="bold" />
@@ -479,97 +159,36 @@
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.25" android:text="Time" android:textColor="#7DD3FC" android:textSize="11sp" android:textStyle="bold" />
             </LinearLayout>
 
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+            <ScrollView android:layout_width="match_parent" android:layout_height="match_parent">
 
-                <LinearLayout
-                    android:id="@+id/layoutHistoryTableRows"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
+                <LinearLayout android:id="@+id/layoutHistoryTableRows" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
             </ScrollView>
         </LinearLayout>
 
-        <!-- 4. IN-APP CONTACTS TAB -->
-        <LinearLayout
-            android:id="@+id/tabContactsView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/bg_ai_card"
-            android:orientation="vertical"
-            android:padding="12dp"
-            android:visibility="gone">
+        
+        <LinearLayout android:id="@+id/tabContactsView" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_ai_card" android:orientation="vertical" android:padding="12dp" android:visibility="gone">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="📇 In-App Phonebook (Auto 11-Digit Format)"
-                android:textColor="#FFFFFF"
-                android:textSize="15sp"
-                android:textStyle="bold" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="📇 In-App Phonebook (Auto 11-Digit Format)" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/etSearchContact"
-                android:layout_width="match_parent"
-                android:layout_height="42dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_ai_pill"
-                android:hint="🔍 Search name or number..."
-                android:paddingHorizontal="14dp"
-                android:textColor="#FFFFFF"
-                android:textColorHint="#CBD5E1"
-                android:textSize="13sp" />
+            <EditText android:id="@+id/etSearchContact" android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginTop="8dp" android:background="@drawable/bg_ai_pill" android:hint="🔍 Search name or number..." android:paddingHorizontal="14dp" android:textColor="#FFFFFF" android:textColorHint="#CBD5E1" android:textSize="13sp" />
 
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="8dp">
+            <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="8dp">
 
-                <LinearLayout
-                    android:id="@+id/layoutContactsList"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
+                <LinearLayout android:id="@+id/layoutContactsList" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
             </ScrollView>
         </LinearLayout>
 
-        <!-- 5. STRUCTURED SETTINGS TAB -->
-        <FrameLayout
-            android:id="@+id/tabSettingsView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone">
+        
+        <FrameLayout android:id="@+id/tabSettingsView" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone">
 
-            <!-- 5A. SETTINGS HUB -->
-            <ScrollView
-                android:id="@+id/settingsMenuHub"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+            
+            <ScrollView android:id="@+id/settingsMenuHub" android:layout_width="match_parent" android:layout_height="match_parent">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingBottom="14dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="14dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:text="⚙️ Settings &amp; Customization"
-                        android:textColor="#FFFFFF"
-                        android:textSize="17sp"
-                        android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="8dp" android:text="⚙️ Settings &amp; Customization" android:textColor="#FFFFFF" android:textSize="17sp" android:textStyle="bold" />
 
-                    <LinearLayout
-                        android:id="@+id/menuCallingAccount"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_ai_card"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="15dp">
+                    <LinearLayout android:id="@+id/menuCallingAccount" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_ai_card" android:gravity="center_vertical" android:orientation="horizontal" android:padding="15dp">
 
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📞" android:textSize="22sp" />
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
@@ -579,15 +198,7 @@
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:id="@+id/menuSipAccount"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="9dp"
-                        android:background="@drawable/bg_ai_card"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="15dp">
+                    <LinearLayout android:id="@+id/menuSipAccount" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="9dp" android:background="@drawable/bg_ai_card" android:gravity="center_vertical" android:orientation="horizontal" android:padding="15dp">
 
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📡" android:textSize="22sp" />
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
@@ -597,14 +208,7 @@
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="9dp"
-                        android:background="@drawable/bg_ai_card"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="15dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="9dp" android:background="@drawable/bg_ai_card" android:gravity="center_vertical" android:orientation="horizontal" android:padding="15dp">
 
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⏺️" android:textSize="22sp" />
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
@@ -614,15 +218,7 @@
                         <Switch android:id="@+id/switchAutoRecord" android:layout_width="wrap_content" android:layout_height="wrap_content" />
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:id="@+id/menuUiThemes"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="9dp"
-                        android:background="@drawable/bg_ai_card"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="15dp">
+                    <LinearLayout android:id="@+id/menuUiThemes" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="9dp" android:background="@drawable/bg_ai_card" android:gravity="center_vertical" android:orientation="horizontal" android:padding="15dp">
 
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎨" android:textSize="22sp" />
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
@@ -632,15 +228,7 @@
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:id="@+id/menuBackupRestore"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="9dp"
-                        android:background="@drawable/bg_ai_card"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="15dp">
+                    <LinearLayout android:id="@+id/menuBackupRestore" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="9dp" android:background="@drawable/bg_ai_card" android:gravity="center_vertical" android:orientation="horizontal" android:padding="15dp">
 
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💾" android:textSize="22sp" />
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
@@ -650,15 +238,19 @@
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:id="@+id/menuAbout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="9dp"
-                        android:background="@drawable/bg_ai_card"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="15dp">
+                    <LinearLayout android:id="@+id/cardMenuBalance" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="10dp" android:background="@drawable/bg_ai_pill" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:padding="14dp">
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💰" android:textSize="22sp" />
+
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Account Balance (BDT)" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Auto-login &amp; fetch SIP portal balance" android:textColor="#6EE7B7" android:textSize="12sp" />
+    </LinearLayout>
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#7DD3FC" android:textSize="16sp" android:textStyle="bold" />
+</LinearLayout><LinearLayout android:id="@+id/menuAbout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="9dp" android:background="@drawable/bg_ai_card" android:gravity="center_vertical" android:orientation="horizontal" android:padding="15dp">
 
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ℹ️" android:textSize="22sp" />
                         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
@@ -671,55 +263,28 @@
                 </LinearLayout>
             </ScrollView>
 
-            <!-- 5B. CALLING ACCOUNT SUB-SCREEN -->
-            <LinearLayout
-                android:id="@+id/subCallingAccount"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_ai_card"
-                android:orientation="vertical"
-                android:padding="14dp"
-                android:visibility="gone">
+            
+            <LinearLayout android:id="@+id/subCallingAccount" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_ai_card" android:orientation="vertical" android:padding="14dp" android:visibility="gone">
 
                 <Button android:id="@+id/btnBackFromCalling" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back to Settings" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="📞 Select Calling Account Mode" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" />
                 <RadioGroup android:id="@+id/rgCallingAccount" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" />
             </LinearLayout>
 
-            <!-- 5C. SIP ACCOUNT SUB-SCREEN -->
-            <ScrollView
-                android:id="@+id/subSipAccount"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="gone">
+            
+            <ScrollView android:id="@+id/subSipAccount" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingBottom="14dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="14dp">
 
                     <Button android:id="@+id/btnBackFromSip" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back to Settings" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_ai_card"
-                        android:orientation="vertical"
-                        android:padding="12dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:background="@drawable/bg_ai_card" android:orientation="vertical" android:padding="12dp">
 
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📡 Active SIP Accounts (Tap 🔔 for Ringtone)" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" />
                         <LinearLayout android:id="@+id/layoutSavedAccountsContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:orientation="vertical" />
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_ai_card"
-                        android:orientation="vertical"
-                        android:padding="12dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:background="@drawable/bg_ai_card" android:orientation="vertical" android:padding="12dp">
 
                         <TextView android:id="@+id/tvFormTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="➕ Add New SIP Account" android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold" />
                         <EditText android:id="@+id/etAccountLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Account Name (e.g. BanglaCall)" android:inputType="text" android:textColor="#FFFFFF" android:textColorHint="#E2E8F0" android:textSize="13sp" />
@@ -736,42 +301,20 @@
                 </LinearLayout>
             </ScrollView>
 
-            <!-- 5D. THEMES SUB-SCREEN (20 Themes Scrollable Container) -->
-            <LinearLayout
-                android:id="@+id/subUiThemes"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_ai_card"
-                android:orientation="vertical"
-                android:padding="14dp"
-                android:visibility="gone">
+            
+            <LinearLayout android:id="@+id/subUiThemes" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_ai_card" android:orientation="vertical" android:padding="14dp" android:visibility="gone">
 
                 <Button android:id="@+id/btnBackFromThemes" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back to Settings" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="🎨 Choose From 20 AI UI Themes" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" />
 
-                <ScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="8dp">
+                <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="8dp">
 
-                    <LinearLayout
-                        android:id="@+id/layoutThemesListContainer"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:paddingBottom="12dp" />
+                    <LinearLayout android:id="@+id/layoutThemesListContainer" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="12dp" />
                 </ScrollView>
             </LinearLayout>
 
-            <!-- 5E. BACKUP & RESTORE SUB-SCREEN -->
-            <LinearLayout
-                android:id="@+id/subBackupRestore"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_ai_card"
-                android:orientation="vertical"
-                android:padding="14dp"
-                android:visibility="gone">
+            
+            <LinearLayout android:id="@+id/subBackupRestore" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_ai_card" android:orientation="vertical" android:padding="14dp" android:visibility="gone">
 
                 <Button android:id="@+id/btnBackFromBackup" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back to Settings" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="💾 Backup &amp; Restore Data" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" />
@@ -782,157 +325,48 @@
             </LinearLayout>
 
 
-            <!-- 5G. ACCOUNT BALANCE CHECKER SUB-SCREEN -->
-            <LinearLayout
-                android:id="@+id/subBalance"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_ai_card"
-                android:orientation="vertical"
-                android:padding="14dp"
-                android:visibility="gone">
+            
+            <LinearLayout android:id="@+id/subBalance" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_ai_card" android:orientation="vertical" android:padding="14dp" android:visibility="gone">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
 
-                    <Button
-                        android:id="@+id/btnBackFromBalance"
-                        android:layout_width="wrap_content"
-                        android:layout_height="38dp"
-                        android:background="@drawable/bg_ai_pill"
-                        android:text="⬅ Back"
-                        android:textAllCaps="false"
-                        android:textColor="#FFFFFF"
-                        android:textSize="12sp" />
+                    <Button android:id="@+id/btnBackFromBalance" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_weight="1"
-                        android:text="💰 SIP Portal Balance (BDT)"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:layout_weight="1" android:text="💰 SIP Portal Balance (BDT)" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tvBalanceFetchStatus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="#330F172A"
-                    android:padding="8dp"
-                    android:text="ℹ️ Tap Edit Link to set portal URL, then tap Fetch Balance."
-                    android:textColor="#BAE6FD"
-                    android:textSize="11.5sp" />
+                <TextView android:id="@+id/tvBalanceFetchStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="#330F172A" android:padding="8dp" android:text="ℹ️ Tap Edit Link to set portal URL, then tap Fetch Balance." android:textColor="#BAE6FD" android:textSize="11.5sp" />
 
-                <!-- Hidden/Collapsible WebView for Auto-Login & Manual Portal View -->
-                <LinearLayout
-                    android:id="@+id/layoutPortalWebContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="220dp"
-                    android:layout_marginTop="8dp"
-                    android:background="#FFFFFF"
-                    android:orientation="vertical"
-                    android:visibility="gone">
+                
+                <LinearLayout android:id="@+id/layoutPortalWebContainer" android:layout_width="match_parent" android:layout_height="220dp" android:layout_marginTop="8dp" android:background="#FFFFFF" android:orientation="vertical" android:visibility="gone">
 
-                    <Button
-                        android:id="@+id/btnClosePortalWeb"
-                        android:layout_width="match_parent"
-                        android:layout_height="34dp"
-                        android:background="#1E293B"
-                        android:text="✖ Hide Portal Browser"
-                        android:textAllCaps="false"
-                        android:textColor="#FFFFFF"
-                        android:textSize="12sp" />
+                    <Button android:id="@+id/btnClosePortalWeb" android:layout_width="match_parent" android:layout_height="34dp" android:background="#1E293B" android:text="✖ Hide Portal Browser" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
 
-                    <WebView
-                        android:id="@+id/webViewBalanceFetcher"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
+                    <WebView android:id="@+id/webViewBalanceFetcher" android:layout_width="match_parent" android:layout_height="match_parent" />
                 </LinearLayout>
 
-                <ScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_weight="1">
+                <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_marginTop="8dp" android:layout_weight="1">
 
-                    <LinearLayout
-                        android:id="@+id/containerBalanceAccounts"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical" />
+                    <LinearLayout android:id="@+id/containerBalanceAccounts" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
                 </ScrollView>
             </LinearLayout>
 
-            <!-- 5F. ABOUT SUB-SCREEN (Animated) -->
-            <LinearLayout
-                android:id="@+id/subAbout"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_ai_card"
-                android:orientation="vertical"
-                android:padding="14dp"
-                android:visibility="gone">
+            
+            <LinearLayout android:id="@+id/subAbout" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/bg_ai_card" android:orientation="vertical" android:padding="14dp" android:visibility="gone">
 
                 <Button android:id="@+id/btnBackFromAbout" android:layout_width="wrap_content" android:layout_height="38dp" android:background="@drawable/bg_ai_pill" android:text="⬅ Back to Settings" android:textAllCaps="false" android:textColor="#FFFFFF" android:textSize="12sp" />
 
-                <LinearLayout
-                    android:id="@+id/layoutAboutAnimatedCard"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
+                <LinearLayout android:id="@+id/layoutAboutAnimatedCard" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="vertical">
 
-                    <ImageView
-                        android:id="@+id/ivAboutAnimatedLogo"
-                        android:layout_width="76dp"
-                        android:layout_height="76dp"
-                        android:src="@drawable/ic_app_logo" />
+                    <ImageView android:id="@+id/ivAboutAnimatedLogo" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/ic_app_logo" />
 
-                    <com.sip.dialer.WavingBdFlagView
-                        android:layout_width="64dp"
-                        android:layout_height="40dp"
-                        android:layout_marginTop="14dp" />
+                    <com.sip.dialer.WavingBdFlagView android:layout_width="64dp" android:layout_height="40dp" android:layout_marginTop="14dp" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
-                        android:text="AI SIP Dialer"
-                        android:textColor="#FFFFFF"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="AI SIP Dialer" android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/tvAboutVersionBadge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:background="@drawable/bg_ai_pill"
-                        android:paddingHorizontal="16dp"
-                        android:paddingVertical="4dp"
-                        android:text="App v1.6.9"
-                        android:textColor="#7DD3FC"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                    <TextView android:id="@+id/tvAboutVersionBadge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:background="@drawable/bg_ai_pill" android:paddingHorizontal="16dp" android:paddingVertical="4dp" android:text="App v1.6.9" android:textColor="#7DD3FC" android:textSize="13sp" android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/tvAboutCredits"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="18dp"
-                        android:gravity="center"
-                        android:lineSpacingExtra="8dp"
-                        android:text="🤖 Developed with Gemini AI\n💡 Idea by Akter Hossain\n🇧🇩 Made in Bangladesh"
-                        android:textColor="#E0F2FE"
-                        android:textSize="15.5sp"
-                        android:textStyle="bold" />
+                    <TextView android:id="@+id/tvAboutCredits" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:gravity="center" android:lineSpacingExtra="8dp" android:text="🤖 Developed with Gemini AI\n💡 Idea by Akter Hossain\n🇧🇩 Made in Bangladesh" android:textColor="#E0F2FE" android:textSize="15.5sp" android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -940,100 +374,27 @@
 
     </FrameLayout>
 
-    <!-- ANIMATED INCOMING CALL OVERLAY -->
-    <LinearLayout
-        android:id="@+id/layoutIncomingOverlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#EB090D16"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:visibility="gone">
+    
+    <LinearLayout android:id="@+id/layoutIncomingOverlay" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#EB090D16" android:clickable="true" android:focusable="true" android:gravity="center" android:orientation="vertical" android:padding="24dp" android:visibility="gone">
 
-        <TextView
-            android:id="@+id/tvIncomingLineBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_ai_pill"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="6dp"
-            android:text="📥 Incoming on: BanglaCall"
-            android:textColor="#38BDF8"
-            android:textSize="13sp"
-            android:textStyle="bold" />
+        <TextView android:id="@+id/tvIncomingLineBadge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_ai_pill" android:paddingHorizontal="16dp" android:paddingVertical="6dp" android:text="📥 Incoming on: BanglaCall" android:textColor="#38BDF8" android:textSize="13sp" android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvIncomingPulseRing"
-            android:layout_width="110dp"
-            android:layout_height="110dp"
-            android:layout_marginTop="24dp"
-            android:background="@drawable/bg_call_btn"
-            android:gravity="center"
-            android:text="📲"
-            android:textSize="44sp" />
+        <TextView android:id="@+id/tvIncomingPulseRing" android:layout_width="110dp" android:layout_height="110dp" android:layout_marginTop="24dp" android:background="@drawable/bg_call_btn" android:gravity="center" android:text="📲" android:textSize="44sp" />
 
-        <TextView
-            android:id="@+id/tvIncomingCallerName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:text="Caller Name"
-            android:textColor="#FFFFFF"
-            android:textSize="26sp"
-            android:textStyle="bold" />
+        <TextView android:id="@+id/tvIncomingCallerName" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:text="Caller Name" android:textColor="#FFFFFF" android:textSize="26sp" android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvIncomingCallerNumber"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="018XXXXXXXX"
-            android:textColor="#BAE6FD"
-            android:textSize="16sp" />
+        <TextView android:id="@+id/tvIncomingCallerNumber" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="018XXXXXXXX" android:textColor="#BAE6FD" android:textSize="16sp" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:gravity="center"
-            android:orientation="horizontal">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="40dp" android:gravity="center" android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/btnDeclineIncoming"
-                android:layout_width="82dp"
-                android:layout_height="82dp"
-                android:layout_marginEnd="44dp"
-                android:background="@drawable/bg_end_call_btn"
-                android:text="📵"
-                android:textColor="#FFFFFF"
-                android:textSize="30sp" />
+            <Button android:id="@+id/btnDeclineIncoming" android:layout_width="82dp" android:layout_height="82dp" android:layout_marginEnd="44dp" android:background="@drawable/bg_end_call_btn" android:text="📵" android:textColor="#FFFFFF" android:textSize="30sp" />
 
-            <Button
-                android:id="@+id/btnAnswerIncoming"
-                android:layout_width="82dp"
-                android:layout_height="82dp"
-                android:background="@drawable/bg_call_btn"
-                android:text="📞"
-                android:textColor="#FFFFFF"
-                android:textSize="30sp" />
+            <Button android:id="@+id/btnAnswerIncoming" android:layout_width="82dp" android:layout_height="82dp" android:background="@drawable/bg_call_btn" android:text="📞" android:textColor="#FFFFFF" android:textSize="30sp" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- BOTTOM NAVIGATION BAR -->
-<LinearLayout
-        android:id="@+id/bottomGlassNav"
-        android:layout_width="match_parent"
-        android:layout_height="58dp"
-        android:layout_alignParentBottom="true"
-        android:layout_marginHorizontal="12dp"
-        android:layout_marginBottom="8dp"
-        android:background="@drawable/bg_ai_card"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingHorizontal="6dp">
+    
+<LinearLayout android:id="@+id/bottomGlassNav" android:layout_width="match_parent" android:layout_height="58dp" android:layout_alignParentBottom="true" android:layout_marginHorizontal="12dp" android:layout_marginBottom="8dp" android:background="@drawable/bg_ai_card" android:gravity="center" android:orientation="horizontal" android:paddingHorizontal="6dp">
 
         <Button android:id="@+id/btnNavKeypad" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@android:color/transparent" android:text="🔢\nKeypad" android:textAllCaps="false" android:textColor="#7DD3FC" android:textSize="11sp" />
         <Button android:id="@+id/btnNavRecents" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:background="@android:color/transparent" android:text="📊\nRecents" android:textAllCaps="false" android:textColor="#E2E8F0" android:textSize="11sp" />

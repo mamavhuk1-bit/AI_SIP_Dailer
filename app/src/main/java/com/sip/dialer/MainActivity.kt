@@ -1,5 +1,10 @@
 package com.sip.dialer
 
+import android.annotation.SuppressLint
+import android.webkit.CookieManager
+import android.webkit.WebView
+import android.webkit.WebViewClient
+
 import android.Manifest
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder

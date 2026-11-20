@@ -30,13 +30,6 @@ import android.net.NetworkRequest
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import com.google.android.gms.auth.GoogleAuthUtil
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.common.api.Scope
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
@@ -2575,43 +2568,36 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    // =========================================================================
-    // GOOGLE SIGN-IN & AUTO GOOGLE DRIVE APPDATA CLOUD BACKUP (v2.1.0)
-    // =========================================================================
-    private val RC_GOOGLE_SIGN_IN = 9001
-    private val DRIVE_APPDATA_SCOPE = "https://www.googleapis.com/auth/drive.appdata"
 
-    private fun getGoogleSignInClient(): GoogleSignInClient {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestScopes(Scope(DRIVE_APPDATA_SCOPE))
-            .build()
-        return GoogleSignIn.getClient(this, gso)
-    }
+
+    // =========================================================================
+    // ZERO-API DIRECT GOOGLE DRIVE FOLDER AUTO-BACKUP & RESTORE (v2.2.0)
+    // =========================================================================
+    private val RC_PICK_GDRIVE_FOLDER = 9011
+    private val RC_PICK_GDRIVE_RESTORE_FILE = 9012
 
     private fun updateGoogleBackupStatusSubtitle() {
         val tvSub = findViewById<TextView>(R.id.tvGoogleBackupStatusSub) ?: return
-        val account = GoogleSignIn.getLastSignedInAccount(this)
         val cloudPrefs = getSharedPreferences("GoogleCloudBackupPrefs", Context.MODE_PRIVATE)
+        val treeUriStr = cloudPrefs.getString("gdrive_tree_uri", "") ?: ""
         val lastSync = cloudPrefs.getString("last_cloud_sync_time", "") ?: ""
 
-        if (account != null) {
-            val email = account.email ?: "Connected"
+        if (treeUriStr.isNotEmpty()) {
             tvSub.text = if (lastSync.isNotEmpty()) {
-                "✅ $email • Auto-synced: $lastSync"
+                "✅ Google Drive Linked • Auto-synced: $lastSync"
             } else {
-                "✅ Connected: $email (Auto-Backup ON)"
+                "✅ Google Drive Folder Linked (Auto-Backup ON)"
             }
             tvSub.setTextColor(Color.parseColor("#6EE7B7"))
         } else {
-            tvSub.text = "Tap to sign in with Google for auto cloud backup"
+            tvSub.text = "Tap to link your Google Drive folder (No API needed)"
             tvSub.setTextColor(Color.parseColor("#7DD3FC"))
         }
     }
 
     private fun showGoogleCloudBackupDialog() {
-        val account = GoogleSignIn.getLastSignedInAccount(this)
         val cloudPrefs = getSharedPreferences("GoogleCloudBackupPrefs", Context.MODE_PRIVATE)
+        val treeUriStr = cloudPrefs.getString("gdrive_tree_uri", "") ?: ""
         val lastSync = cloudPrefs.getString("last_cloud_sync_time", "Never") ?: "Never"
 
         val dialog = android.app.Dialog(this)
@@ -2633,7 +2619,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val tvTitle = TextView(this).apply {
-            text = "☁️ Google Cloud Auto-Backup"
+            text = "☁️ Google Drive Auto-Backup"
             setTextColor(Color.parseColor("#E0F2FE"))
             textSize = 18f
             setTypeface(null, Typeface.BOLD)
@@ -2641,10 +2627,10 @@ class MainActivity : AppCompatActivity() {
         root.addView(tvTitle)
 
         val tvInfo = TextView(this).apply {
-            text = if (account != null) {
-                "Signed in as: ${account.email}\nAuto-Backup Status: ACTIVE\nLast Cloud Sync: $lastSync"
+            text = if (treeUriStr.isNotEmpty()) {
+                "Status: LINKED TO GOOGLE DRIVE\nAuto-Backup: ACTIVE (No API / SHA-1 needed)\nLast Auto-Sync: $lastSync"
             } else {
-                "Sign in with your Google Account to automatically back up your SIP accounts, ringtones, call logs & balance URLs to Google Drive."
+                "Select a folder inside your Google Drive once. Every time you add/edit SIP accounts or settings, it will auto-save directly to your Google Drive!"
             }
             setTextColor(Color.parseColor("#CBD5E1"))
             textSize = 13.5f
@@ -2676,30 +2662,46 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (account == null) {
-            root.addView(makeBtn("🔐 Sign in with Google", "#2563EB", "#4F46E5") {
-                dialog.dismiss()
-                startActivityForResult(getGoogleSignInClient().signInIntent, RC_GOOGLE_SIGN_IN)
-            })
-        } else {
+        root.addView(makeBtn(
+            if (treeUriStr.isEmpty()) "📂 Link Google Drive Folder (1-Tap)" else "📂 Change Google Drive Folder",
+            "#2563EB", "#4F46E5"
+        ) {
+            dialog.dismiss()
+            try {
+                val intent = android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                    addFlags(
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                        android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                        android.content.Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+                    )
+                }
+                Toast.makeText(this, "Select 'Google Drive' from left menu & tap 'USE THIS FOLDER'", Toast.LENGTH_LONG).show()
+                startActivityForResult(intent, RC_PICK_GDRIVE_FOLDER)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Folder picker error: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        })
+
+        if (treeUriStr.isNotEmpty()) {
             root.addView(makeBtn("☁️ Backup to Google Drive Now", "#0D9488", "#0369A1") {
                 dialog.dismiss()
-                Toast.makeText(this, "☁️ Uploading backup to Google Drive...", Toast.LENGTH_SHORT).show()
                 triggerAutoGoogleDriveBackup(showToast = true)
             })
-            root.addView(makeBtn("📥 Restore from Google Drive", "#7C3AED", "#DB2777") {
-                dialog.dismiss()
-                Toast.makeText(this, "📥 Checking Google Drive backup...", Toast.LENGTH_SHORT).show()
-                restoreFromGoogleDriveBackup()
-            })
-            root.addView(makeBtn("🚪 Sign Out Google Account", "#475569", "#334155") {
-                getGoogleSignInClient().signOut().addOnCompleteListener {
-                    dialog.dismiss()
-                    updateGoogleBackupStatusSubtitle()
-                    Toast.makeText(this, "Signed out from Google Backup", Toast.LENGTH_SHORT).show()
-                }
-            })
         }
+
+        root.addView(makeBtn("📥 Restore Backup from Google Drive", "#7C3AED", "#DB2777") {
+            dialog.dismiss()
+            try {
+                val intent = android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(android.content.Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                }
+                Toast.makeText(this, "Select 'ai_sip_dialer_backup.json' from Google Drive", Toast.LENGTH_LONG).show()
+                startActivityForResult(intent, RC_PICK_GDRIVE_RESTORE_FILE)
+            } catch (e: Exception) {
+                Toast.makeText(this, "File picker error: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        })
 
         val closeBtn = TextView(this).apply {
             text = "✖ CLOSE"
@@ -2723,17 +2725,35 @@ class MainActivity : AppCompatActivity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == RC_GOOGLE_SIGN_IN) {
+        if (resultCode != android.app.Activity.RESULT_OK || data == null) return
+
+        if (requestCode == RC_PICK_GDRIVE_FOLDER) {
+            val treeUri = data.data ?: return
             try {
-                val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-                val account = task.getResult(ApiException::class.java)
-                if (account != null) {
-                    updateGoogleBackupStatusSubtitle()
-                    Toast.makeText(this, "✅ Signed in: ${account.email}", Toast.LENGTH_LONG).show()
-                    triggerAutoGoogleDriveBackup(showToast = true)
+                val takeFlags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                contentResolver.takePersistableUriPermission(treeUri, takeFlags)
+            } catch (_: Exception) {}
+
+            getSharedPreferences("GoogleCloudBackupPrefs", Context.MODE_PRIVATE).edit()
+                .putString("gdrive_tree_uri", treeUri.toString())
+                .apply()
+
+            updateGoogleBackupStatusSubtitle()
+            triggerAutoGoogleDriveBackup(showToast = true)
+        } else if (requestCode == RC_PICK_GDRIVE_RESTORE_FILE) {
+            val fileUri = data.data ?: return
+            try {
+                val jsonStr = contentResolver.openInputStream(fileUri)?.bufferedReader()?.use { it.readText() } ?: ""
+                if (jsonStr.contains("\"preferences\"")) {
+                    applyRestoredAppBackupJson(jsonStr)
+                    Toast.makeText(this, "✅ Restored from Google Drive! Restarting...", Toast.LENGTH_LONG).show()
+                    mainHandler.postDelayed({ recreate() }, 1000)
+                } else {
+                    Toast.makeText(this, "⚠️ Invalid backup file selected!", Toast.LENGTH_LONG).show()
                 }
-            } catch (e: ApiException) {
-                Toast.makeText(this, "Google Sign-In failed (Code ${e.statusCode})", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, "⚠️ Restore error: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -2741,7 +2761,7 @@ class MainActivity : AppCompatActivity() {
     private fun buildFullAppBackupJson(): String {
         val rootObj = org.json.JSONObject()
         rootObj.put("app", "AI_SIP_Dialer")
-        rootObj.put("version", "2.1.0")
+        rootObj.put("version", "2.2.0")
         rootObj.put("timestamp", System.currentTimeMillis())
 
         val prefNames = listOf("SipDialerPrefs", "AI_SIP_PREFS", "SipBalancePrefs")
@@ -2787,123 +2807,66 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun triggerAutoGoogleDriveBackup(showToast: Boolean = false) {
-        val account = GoogleSignIn.getLastSignedInAccount(this) ?: return
-        val androidAccount = account.account ?: return
+        val cloudPrefs = getSharedPreferences("GoogleCloudBackupPrefs", Context.MODE_PRIVATE)
+        val treeUriStr = cloudPrefs.getString("gdrive_tree_uri", "") ?: ""
+        if (treeUriStr.isEmpty()) return
 
         Thread {
             try {
-                val token = GoogleAuthUtil.getToken(this, androidAccount, "oauth2:$DRIVE_APPDATA_SCOPE")
-                val backupJson = buildFullAppBackupJson()
-                val fileName = "ai_sip_dialer_cloud_backup.json"
+                val treeUri = android.net.Uri.parse(treeUriStr)
+                val docId = android.provider.DocumentsContract.getTreeDocumentId(treeUri)
+                val childrenUri = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, docId)
+                val parentDocUri = android.provider.DocumentsContract.buildDocumentUriUsingTree(treeUri, docId)
 
-                val queryUrl = java.net.URL("https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D'$fileName'&fields=files(id,name)")
-                val queryConn = (queryUrl.openConnection() as java.net.HttpURLConnection).apply {
-                    requestMethod = "GET"
-                    setRequestProperty("Authorization", "Bearer $token")
-                }
-                val queryResp = queryConn.inputStream.bufferedReader().readText()
-                val filesArr = org.json.JSONObject(queryResp).optJSONArray("files")
-                val existingFileId = if (filesArr != null && filesArr.length() > 0) {
-                    filesArr.getJSONObject(0).optString("id", "")
-                } else ""
+                val targetFileName = "ai_sip_dialer_backup.json"
+                var existingFileUri: android.net.Uri? = null
 
-                val boundary = "===AISIPDIALERBOUNDARY==="
-                val uploadUrl = if (existingFileId.isNotEmpty()) {
-                    java.net.URL("https://www.googleapis.com/upload/drive/v3/files/$existingFileId?uploadType=multipart")
-                } else {
-                    java.net.URL("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart")
-                }
-
-                val metaJson = if (existingFileId.isNotEmpty()) {
-                    """{"name":"$fileName"}"""
-                } else {
-                    """{"name":"$fileName","parents":["appDataFolder"]}"""
+                contentResolver.query(
+                    childrenUri,
+                    arrayOf(
+                        android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                        android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME
+                    ),
+                    null, null, null
+                )?.use { cursor ->
+                    while (cursor.moveToNext()) {
+                        val name = cursor.getString(1)
+                        if (name == targetFileName) {
+                            val childDocId = cursor.getString(0)
+                            existingFileUri = android.provider.DocumentsContract.buildDocumentUriUsingTree(treeUri, childDocId)
+                            break
+                        }
+                    }
                 }
 
-                val bodyBuilder = StringBuilder()
-                bodyBuilder.append("--$boundary\r\n")
-                bodyBuilder.append("Content-Type: application/json; charset=UTF-8\r\n\r\n")
-                bodyBuilder.append(metaJson).append("\r\n")
-                bodyBuilder.append("--$boundary\r\n")
-                bodyBuilder.append("Content-Type: application/json; charset=UTF-8\r\n\r\n")
-                bodyBuilder.append(backupJson).append("\r\n")
-                bodyBuilder.append("--$boundary--")
+                val targetUri = existingFileUri ?: android.provider.DocumentsContract.createDocument(
+                    contentResolver,
+                    parentDocUri,
+                    "application/json",
+                    targetFileName
+                )
 
-                val uploadConn = (uploadUrl.openConnection() as java.net.HttpURLConnection).apply {
-                    requestMethod = if (existingFileId.isNotEmpty()) "PATCH" else "POST"
-                    doOutput = true
-                    setRequestProperty("Authorization", "Bearer $token")
-                    setRequestProperty("Content-Type", "multipart/related; boundary=$boundary")
-                }
-                uploadConn.outputStream.use { it.write(bodyBuilder.toString().toByteArray(Charsets.UTF_8)) }
-
-                val code = uploadConn.responseCode
-                if (code in 200..299) {
+                if (targetUri != null) {
+                    val jsonBytes = buildFullAppBackupJson().toByteArray(Charsets.UTF_8)
+                    contentResolver.openOutputStream(targetUri, "wt")?.use { out ->
+                        out.write(jsonBytes)
+                        out.flush()
+                    }
                     val nowStr = java.text.SimpleDateFormat("dd MMM, hh:mm a", Locale.US).format(java.util.Date())
-                    getSharedPreferences("GoogleCloudBackupPrefs", Context.MODE_PRIVATE).edit()
-                        .putString("last_cloud_sync_time", nowStr)
-                        .apply()
+                    cloudPrefs.edit().putString("last_cloud_sync_time", nowStr).apply()
+
                     runOnUiThread {
                         updateGoogleBackupStatusSubtitle()
                         if (showToast) {
-                            Toast.makeText(this, "✅ Auto-backed up to Google Drive!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "✅ Auto-saved to your Google Drive!", Toast.LENGTH_SHORT).show()
                         }
-                    }
-                } else if (showToast) {
-                    runOnUiThread {
-                        Toast.makeText(this, "⚠️ Cloud sync error: HTTP $code", Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {
                 if (showToast) {
                     runOnUiThread {
-                        Toast.makeText(this, "⚠️ Cloud backup failed: ${e.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "⚠️ Drive sync error: ${e.message}", Toast.LENGTH_LONG).show()
                     }
-                }
-            }
-        }.start()
-    }
-
-    private fun restoreFromGoogleDriveBackup() {
-        val account = GoogleSignIn.getLastSignedInAccount(this) ?: return
-        val androidAccount = account.account ?: return
-
-        Thread {
-            try {
-                val token = GoogleAuthUtil.getToken(this, androidAccount, "oauth2:$DRIVE_APPDATA_SCOPE")
-                val fileName = "ai_sip_dialer_cloud_backup.json"
-                val queryUrl = java.net.URL("https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D'$fileName'&fields=files(id,name)")
-                val queryConn = (queryUrl.openConnection() as java.net.HttpURLConnection).apply {
-                    requestMethod = "GET"
-                    setRequestProperty("Authorization", "Bearer $token")
-                }
-                val queryResp = queryConn.inputStream.bufferedReader().readText()
-                val filesArr = org.json.JSONObject(queryResp).optJSONArray("files")
-                if (filesArr == null || filesArr.length() == 0) {
-                    runOnUiThread {
-                        Toast.makeText(this, "ℹ️ No cloud backup found in this Google Account.", Toast.LENGTH_LONG).show()
-                    }
-                    return@Thread
-                }
-
-                val fileId = filesArr.getJSONObject(0).getString("id")
-                val downloadUrl = java.net.URL("https://www.googleapis.com/drive/v3/files/$fileId?alt=media")
-                val dlConn = (downloadUrl.openConnection() as java.net.HttpURLConnection).apply {
-                    requestMethod = "GET"
-                    setRequestProperty("Authorization", "Bearer $token")
-                }
-                val jsonContent = dlConn.inputStream.bufferedReader().readText()
-                applyRestoredAppBackupJson(jsonContent)
-
-                runOnUiThread {
-                    Toast.makeText(this, "✅ Cloud backup restored! Restarting app...", Toast.LENGTH_LONG).show()
-                    mainHandler.postDelayed({
-                        recreate()
-                    }, 1200)
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    Toast.makeText(this, "⚠️ Restore failed: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }.start()

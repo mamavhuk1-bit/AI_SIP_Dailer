@@ -238,7 +238,19 @@
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#FFFFFF" android:textSize="16sp" />
                     </LinearLayout>
 
-                    <LinearLayout android:id="@+id/cardMenuBalance" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="10dp" android:background="@drawable/bg_ai_pill" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:padding="14dp">
+                    <LinearLayout android:id="@+id/cardMenuGoogleBackup" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="10dp" android:background="@drawable/bg_ai_pill" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:padding="14dp">
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="☁️" android:textSize="22sp" />
+
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:orientation="vertical">
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Google Cloud Auto-Backup" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" />
+
+        <TextView android:id="@+id/tvGoogleBackupStatusSub" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tap to connect Google Account for auto-sync" android:textColor="#7DD3FC" android:textSize="12sp" />
+    </LinearLayout>
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="❯" android:textColor="#7DD3FC" android:textSize="16sp" android:textStyle="bold" />
+</LinearLayout><LinearLayout android:id="@+id/cardMenuBalance" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="10dp" android:background="@drawable/bg_ai_pill" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:orientation="horizontal" android:padding="14dp">
 
     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💰" android:textSize="22sp" />
 

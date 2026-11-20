@@ -2052,7 +2052,7 @@ class MainActivity : AppCompatActivity() {
     private fun renderBalanceAccountsList() {
         val container = findViewById<LinearLayout>(R.id.containerBalanceAccounts) ?: return
         container.removeAllViews()
-        val accounts = loadAccounts()
+        val accounts = getSavedAccounts()
         val prefs = getSharedPreferences("SipBalancePrefs", Context.MODE_PRIVATE)
 
         if (accounts.isEmpty()) {

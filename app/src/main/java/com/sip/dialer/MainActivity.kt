@@ -602,7 +602,7 @@ class MainActivity : AppCompatActivity() {
         subSipAccount = findViewById(R.id.subSipAccount)
         subUiThemes = findViewById(R.id.subUiThemes)
         subBackupRestore = findViewById(R.id.subBackupRestore)
-        subAbout = findViewById(R.id.subAbout)
+        subAbout = findViewById(R.id.subAbout, R.id.subBalance)
 
         tvCallingAccountSub = findViewById(R.id.tvCallingAccountSub)
         tvCurrentThemeSub = findViewById(R.id.tvCurrentThemeSub)
@@ -2042,4 +2042,299 @@ class MainActivity : AppCompatActivity() {
         core.removeListener(coreListener)
         core.stop()
     }
+
+    // =========================================================================
+    // SMART SIP PORTAL AUTO-LOGIN & BDT BALANCE FETCHER (AmarIP, ICC & Custom)
+    // =========================================================================
+    private var activeBalanceCheckIndex = -1
+    private var loginAttemptedForCurrentFetch = false
+
+    private fun renderBalanceAccountsList() {
+        val container = findViewById<LinearLayout>(R.id.containerBalanceAccounts) ?: return
+        container.removeAllViews()
+        val accounts = loadAccounts()
+        val prefs = getSharedPreferences("SipBalancePrefs", Context.MODE_PRIVATE)
+
+        if (accounts.isEmpty()) {
+            val emptyTv = TextView(this).apply {
+                text = "No SIP accounts saved yet. Add an account in SIP Accounts first."
+                setTextColor(Color.parseColor("#CBD5E1"))
+                textSize = 13f
+                setPadding(12, 24, 12, 24)
+            }
+            container.addView(emptyTv)
+            return
+        }
+
+        val ordinals = arrayOf("1st Account", "2nd Account", "3rd Account", "4th Account", "5th Account", "6th Account")
+
+        accounts.forEachIndexed { idx, acc ->
+            val labelTitle = if (idx < ordinals.size) ordinals[idx] else "${idx + 1}th Account"
+            val savedUrl = prefs.getString("url_${acc.id}", "") ?: ""
+            val savedBal = prefs.getString("bal_${acc.id}", "Not checked yet") ?: "Not checked yet"
+            val savedTime = prefs.getString("time_${acc.id}", "") ?: ""
+
+            val card = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setBackgroundResource(R.drawable.bg_ai_pill)
+                setPadding(32, 26, 32, 26)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { setMargins(0, 0, 0, 22) }
+            }
+
+            val headerRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+            }
+
+            val tvAccTitle = TextView(this).apply {
+                text = "🔹 $labelTitle (${acc.label.ifEmpty { acc.username }})"
+                setTextColor(Color.WHITE)
+                textSize = 14.5f
+                setTypeface(null, Typeface.BOLD)
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+
+            val tvBalBadge = TextView(this).apply {
+                text = if (savedBal.contains("BDT")) "💰 $savedBal" else savedBal
+                setTextColor(Color.parseColor("#4ADE80"))
+                textSize = 15f
+                setTypeface(null, Typeface.BOLD)
+            }
+
+            headerRow.addView(tvAccTitle)
+            headerRow.addView(tvBalBadge)
+            card.addView(headerRow)
+
+            val tvUserAndUrl = TextView(this).apply {
+                val urlDisplay = if (savedUrl.isEmpty()) "⚠️ Portal URL not set" else "🌐 $savedUrl"
+                val timeDisplay = if (savedTime.isNotEmpty()) " • Updated: $savedTime" else ""
+                text = "User: ${acc.username}\n$urlDisplay$timeDisplay"
+                setTextColor(Color.parseColor("#BAE6FD"))
+                textSize = 11.5f
+                setPadding(0, 10, 0, 14)
+            }
+            card.addView(tvUserAndUrl)
+
+            val btnRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+            }
+
+            val btnEditUrl = Button(this).apply {
+                text = "✏️ Edit Link"
+                textSize = 11.5f
+                isAllCaps = false
+                setTextColor(Color.WHITE)
+                setBackgroundResource(R.drawable.bg_ai_pill)
+                layoutParams = LinearLayout.LayoutParams(0, 96, 1f).apply { setMargins(0, 0, 10, 0) }
+                setOnClickListener { showEditBalancePortalDialog(acc, labelTitle) }
+            }
+
+            val btnFetch = Button(this).apply {
+                text = "🔄 Fetch Balance"
+                textSize = 11.5f
+                isAllCaps = false
+                setTextColor(Color.parseColor("#0F172A"))
+                setBackgroundColor(Color.parseColor("#38BDF8"))
+                layoutParams = LinearLayout.LayoutParams(0, 96, 1.2f).apply { setMargins(0, 0, 10, 0) }
+                setOnClickListener {
+                    if (savedUrl.isEmpty()) {
+                        Toast.makeText(this@MainActivity, "Please tap Edit Link and save the website URL first!", Toast.LENGTH_SHORT).show()
+                        showEditBalancePortalDialog(acc, labelTitle)
+                    } else {
+                        startPortalBalanceFetch(idx, acc, savedUrl, showBrowser = false)
+                    }
+                }
+            }
+
+            val btnOpenWeb = Button(this).apply {
+                text = "🌐 View"
+                textSize = 11.5f
+                isAllCaps = false
+                setTextColor(Color.WHITE)
+                setBackgroundResource(R.drawable.bg_ai_pill)
+                layoutParams = LinearLayout.LayoutParams(0, 96, 0.8f)
+                setOnClickListener {
+                    if (savedUrl.isEmpty()) {
+                        showEditBalancePortalDialog(acc, labelTitle)
+                    } else {
+                        startPortalBalanceFetch(idx, acc, savedUrl, showBrowser = true)
+                    }
+                }
+            }
+
+            btnRow.addView(btnEditUrl)
+            btnRow.addView(btnFetch)
+            btnRow.addView(btnOpenWeb)
+            card.addView(btnRow)
+
+            container.addView(card)
+        }
+    }
+
+    private fun showEditBalancePortalDialog(acc: SipAccount, labelTitle: String) {
+        val prefs = getSharedPreferences("SipBalancePrefs", Context.MODE_PRIVATE)
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(45, 30, 45, 10)
+        }
+
+        val etUrl = EditText(this).apply {
+            hint = "Portal URL (e.g. https://amarip.net or https://icctalk.com)"
+            setText(prefs.getString("url_${acc.id}", ""))
+            inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI
+        }
+
+        val etPortalUser = EditText(this).apply {
+            hint = "Portal Login User (Leave blank to use SIP User: ${acc.username})"
+            setText(prefs.getString("puser_${acc.id}", ""))
+        }
+
+        val etPortalPass = EditText(this).apply {
+            hint = "Portal Password (Leave blank to use SIP Password)"
+            setText(prefs.getString("ppass_${acc.id}", ""))
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+
+        layout.addView(etUrl)
+        layout.addView(etPortalUser)
+        layout.addView(etPortalPass)
+
+        AlertDialog.Builder(this)
+            .setTitle("✏️ $labelTitle Balance Portal")
+            .setView(layout)
+            .setPositiveButton("Save Link") { _, _ ->
+                var url = etUrl.text.toString().trim()
+                if (url.isNotEmpty() && !url.startsWith("http://") && !url.startsWith("https://")) {
+                    url = "https://$url"
+                }
+                prefs.edit()
+                    .putString("url_${acc.id}", url)
+                    .putString("puser_${acc.id}", etPortalUser.text.toString().trim())
+                    .putString("ppass_${acc.id}", etPortalPass.text.toString().trim())
+                    .apply()
+                renderBalanceAccountsList()
+                Toast.makeText(this, "Portal URL Saved!", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun startPortalBalanceFetch(idx: Int, acc: SipAccount, portalUrl: String, showBrowser: Boolean) {
+        val webView = findViewById<WebView>(R.id.webViewBalanceFetcher) ?: return
+        val webContainer = findViewById<View>(R.id.layoutPortalWebContainer)
+        val statusTv = findViewById<TextView>(R.id.tvBalanceFetchStatus)
+
+        webContainer?.visibility = if (showBrowser) View.VISIBLE else View.GONE
+        statusTv?.text = "⏳ Connecting to $portalUrl & logging in as ${acc.username}..."
+
+        activeBalanceCheckIndex = idx
+        loginAttemptedForCurrentFetch = false
+
+        val prefs = getSharedPreferences("SipBalancePrefs", Context.MODE_PRIVATE)
+        val loginUser = prefs.getString("puser_${acc.id}", "")?.ifEmpty { acc.username } ?: acc.username
+        val loginPass = prefs.getString("ppass_${acc.id}", "")?.ifEmpty { acc.password } ?: acc.password
+
+        CookieManager.getInstance().setAcceptCookie(true)
+        webView.settings.javaScriptEnabled = true
+        webView.settings.domStorageEnabled = true
+        webView.settings.useWideViewPort = true
+        webView.settings.loadWithOverviewMode = true
+
+        webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                mainHandler.postDelayed({
+                    extractBalanceOrAutoLogin(view, acc, loginUser, loginPass)
+                }, 1800)
+            }
+        }
+        webView.loadUrl(portalUrl)
+    }
+
+    private fun extractBalanceOrAutoLogin(webView: WebView?, acc: SipAccount, user: String, pass: String) {
+        if (webView == null) return
+        val statusTv = findViewById<TextView>(R.id.tvBalanceFetchStatus)
+
+        webView.evaluateJavascript("(function(){ return document.body ? document.body.innerText : ''; })();") { rawText ->
+            val cleanText = rawText
+                ?.trim('"')
+                ?.replace("\\n", " ")
+                ?.replace("\\t", " ")
+                ?: ""
+
+            val detectedBdt = parseBdtBalanceFromText(cleanText)
+            if (detectedBdt != null) {
+                val nowStr = java.text.SimpleDateFormat("hh:mm a", Locale.US).format(java.util.Date())
+                getSharedPreferences("SipBalancePrefs", Context.MODE_PRIVATE).edit()
+                    .putString("bal_${acc.id}", "$detectedBdt BDT")
+                    .putString("time_${acc.id}", nowStr)
+                    .apply()
+                statusTv?.text = "✅ Balance Fetched (${acc.username}): $detectedBdt BDT"
+                Toast.makeText(this, "💰 Balance: $detectedBdt BDT", Toast.LENGTH_LONG).show()
+                renderBalanceAccountsList()
+                return@evaluateJavascript
+            }
+
+            if (!loginAttemptedForCurrentFetch) {
+                loginAttemptedForCurrentFetch = true
+                statusTv?.text = "🔐 Auto-filling login credentials for $user..."
+                val safeUser = user.replace("'", "\\'")
+                val safePass = pass.replace("'", "\\'")
+                val autoLoginJs = """
+                    (function() {
+                        var passInput = document.querySelector('input[type="password"]');
+                        if (!passInput) return "NO_LOGIN_FORM";
+                        var inputs = Array.from(document.querySelectorAll('input[type="text"], input[type="tel"], input[type="email"], input:not([type])'));
+                        var userInput = inputs.find(i => i.offsetParent !== null && i !== passInput) || inputs[0];
+                        if (userInput) {
+                            userInput.focus();
+                            userInput.value = '$safeUser';
+                            userInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            userInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        passInput.focus();
+                        passInput.value = '$safePass';
+                        passInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        passInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+                        var btn = document.querySelector('button[type="submit"], input[type="submit"], button');
+                        if (btn) {
+                            btn.click();
+                        } else if (passInput.form) {
+                            passInput.form.submit();
+                        }
+                        return "SUBMITTED";
+                    })();
+                """
+                webView.evaluateJavascript(autoLoginJs) {
+                    mainHandler.postDelayed({
+                        extractBalanceOrAutoLogin(webView, acc, user, pass)
+                    }, 3500)
+                }
+            } else {
+                statusTv?.text = "⚠️ Could not auto-read balance. Tap 🌐 View to check/login manually once."
+            }
+        }
+    }
+
+    private fun parseBdtBalanceFromText(text: String): String? {
+        if (text.isBlank()) return null
+        val patterns = listOf(
+            Regex("""BDT\s*[:\-]?\s*([0-9]+(?:[.,][0-9]{1,4})?)""", RegexOption.IGNORE_CASE),
+            Regex("""([0-9]+(?:[.,][0-9]{1,4})?)\s*BDT""", RegexOption.IGNORE_CASE),
+            Regex("""(?:Your\s+)?(?:Current\s+)?(?:Balance|Credit)\s*(?:is)?\s*[:\-]?\s*(?:TK|৳|BDT)?\s*([0-9]+(?:[.,][0-9]{1,4})?)""", RegexOption.IGNORE_CASE)
+        )
+        for (regex in patterns) {
+            val match = regex.find(text)
+            if (match != null) {
+                return match.groupValues[1].replace(",", ".")
+            }
+        }
+        return null
+    }
+
 }

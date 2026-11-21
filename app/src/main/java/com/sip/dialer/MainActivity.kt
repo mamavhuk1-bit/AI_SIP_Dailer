@@ -2790,55 +2790,128 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var isRestoringFromCloud = false
+
     private fun buildFullAppBackupJson(): String {
         val rootObj = org.json.JSONObject()
         rootObj.put("app", "AI_SIP_Dialer")
-        rootObj.put("version", "2.3.0")
+        rootObj.put("version", "2.4.0")
         rootObj.put("timestamp", System.currentTimeMillis())
 
-        val prefNames = listOf("SipDialerPrefs", "AI_SIP_PREFS", "SipBalancePrefs")
+        // ১. অ্যাপের shared_prefs ডিরেক্টরির সবগুলো XML ফাইল ডায়নামিকভাবে পড়া (কোনো নাম বাদ পড়বে না)
         val prefsBundle = org.json.JSONObject()
-        for (pName in prefNames) {
+        val detectedPrefNames = mutableSetOf("SipDialerPrefs", "AI_SIP_PREFS", "SipBalancePrefs", "${packageName}_preferences", "MainActivity")
+        try {
+            val prefsDir = java.io.File(applicationInfo.dataDir, "shared_prefs")
+            prefsDir.listFiles()?.forEach { file ->
+                if (file.name.endsWith(".xml")) {
+                    val pName = file.name.removeSuffix(".xml")
+                    if (pName != "SupabaseCloudPrefs") {
+                        detectedPrefNames.add(pName)
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
+        for (pName in detectedPrefNames) {
             val sp = getSharedPreferences(pName, Context.MODE_PRIVATE)
             val allMap = sp.all
             if (allMap.isNotEmpty()) {
                 val singlePrefJson = org.json.JSONObject()
                 for ((k, v) in allMap) {
-                    singlePrefJson.put(k, v)
+                    when (v) {
+                        is Set<*> -> {
+                            val arr = org.json.JSONArray()
+                            v.forEach { item -> arr.put(item?.toString() ?: "") }
+                            val setWrapper = org.json.JSONObject()
+                            setWrapper.put("__type__", "StringSet")
+                            setWrapper.put("values", arr)
+                            singlePrefJson.put(k, setWrapper)
+                        }
+                        else -> singlePrefJson.put(k, v)
+                    }
                 }
                 prefsBundle.put(pName, singlePrefJson)
             }
         }
         rootObj.put("preferences", prefsBundle)
+
+        // ২. যদি কোনো SQLite ডাটাবেস (.db) ফাইল থাকে (যেমন কল হিস্ট্রি বা অ্যাকাউন্ট DB), তা Base64-এ ব্যাকআপ নেওয়া
+        val dbBundle = org.json.JSONObject()
+        try {
+            val dbDir = java.io.File(applicationInfo.dataDir, "databases")
+            dbDir.listFiles()?.forEach { dbFile ->
+                if (dbFile.isFile && !dbFile.name.endsWith("-journal") && !dbFile.name.endsWith("-wal") && !dbFile.name.endsWith("-shm")) {
+                    val b64 = android.util.Base64.encodeToString(dbFile.readBytes(), android.util.Base64.NO_WRAP)
+                    dbBundle.put(dbFile.name, b64)
+                }
+            }
+        } catch (_: Exception) {}
+        rootObj.put("databases", dbBundle)
+
         return rootObj.toString(2)
     }
 
     private fun applyRestoredAppBackupJson(jsonStr: String) {
         val rootObj = org.json.JSONObject(jsonStr)
-        val prefsBundle = rootObj.optJSONObject("preferences") ?: return
-        val keys = prefsBundle.keys()
-        while (keys.hasNext()) {
-            val pName = keys.next()
-            val singlePref = prefsBundle.optJSONObject(pName) ?: continue
-            val editor = getSharedPreferences(pName, Context.MODE_PRIVATE).edit()
-            val itemKeys = singlePref.keys()
-            while (itemKeys.hasNext()) {
-                val k = itemKeys.next()
-                val v = singlePref.get(k)
-                when (v) {
-                    is Boolean -> editor.putBoolean(k, v)
-                    is Int -> editor.putInt(k, v)
-                    is Long -> editor.putLong(k, v)
-                    is Float -> editor.putFloat(k, v)
-                    is Double -> editor.putFloat(k, v.toFloat())
-                    is String -> editor.putString(k, v)
+        val prefsBundle = rootObj.optJSONObject("preferences")
+        if (prefsBundle != null) {
+            val keys = prefsBundle.keys()
+            while (keys.hasNext()) {
+                val pName = keys.next()
+                if (pName == "SupabaseCloudPrefs") continue
+                val singlePref = prefsBundle.optJSONObject(pName) ?: continue
+                val editor = getSharedPreferences(pName, Context.MODE_PRIVATE).edit()
+                editor.clear()
+                val itemKeys = singlePref.keys()
+                while (itemKeys.hasNext()) {
+                    val k = itemKeys.next()
+                    val v = singlePref.get(k)
+                    if (v is org.json.JSONObject && v.optString("__type__") == "StringSet") {
+                        val arr = v.optJSONArray("values")
+                        val strSet = mutableSetOf<String>()
+                        if (arr != null) {
+                            for (idx in 0 until arr.length()) {
+                                strSet.add(arr.optString(idx))
+                            }
+                        }
+                        editor.putStringSet(k, strSet)
+                    } else {
+                        when (v) {
+                            is Boolean -> editor.putBoolean(k, v)
+                            is Int -> editor.putInt(k, v)
+                            is Long -> editor.putLong(k, v)
+                            is Float -> editor.putFloat(k, v)
+                            is Double -> editor.putFloat(k, v.toFloat())
+                            is String -> editor.putString(k, v)
+                        }
+                    }
                 }
+                editor.commit() // Synchronous commit so data is saved before app restarts
             }
-            editor.apply()
+        }
+
+        // ডাটাবেস ফাইল থাকলে রিস্টোর করা
+        val dbBundle = rootObj.optJSONObject("databases")
+        if (dbBundle != null) {
+            try {
+                val dbDir = java.io.File(applicationInfo.dataDir, "databases")
+                if (!dbDir.exists()) dbDir.mkdirs()
+                val dbKeys = dbBundle.keys()
+                while (dbKeys.hasNext()) {
+                    val dbName = dbKeys.next()
+                    val b64 = dbBundle.optString(dbName, "")
+                    if (b64.isNotEmpty()) {
+                        val bytes = android.util.Base64.decode(b64, android.util.Base64.NO_WRAP)
+                        java.io.File(dbDir, dbName).writeBytes(bytes)
+                    }
+                }
+            } catch (_: Exception) {}
         }
     }
 
     private fun triggerAutoGoogleDriveBackup(showToast: Boolean = false) {
+        if (isRestoringFromCloud) return
         val cloudPrefs = getSharedPreferences("SupabaseCloudPrefs", Context.MODE_PRIVATE)
         val savedEmail = cloudPrefs.getString("user_backup_email", "") ?: ""
         if (savedEmail.isEmpty()) return
@@ -2909,10 +2982,17 @@ class MainActivity : AppCompatActivity() {
                     val jsonStr = conn.inputStream.bufferedReader().readText()
                     if (jsonStr.contains("\"preferences\"")) {
                         applyRestoredAppBackupJson(jsonStr)
+                        isRestoringFromCloud = true
                         runOnUiThread {
                             updateGoogleBackupStatusSubtitle()
-                            Toast.makeText(this, "✅ Restored from $folderName! Restarting...", Toast.LENGTH_LONG).show()
-                            mainHandler.postDelayed({ recreate() }, 1000)
+                            Toast.makeText(this, "✅ Full Backup Restored! Reloading app...", Toast.LENGTH_LONG).show()
+                            mainHandler.postDelayed({
+                                val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+                                launchIntent?.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                startActivity(launchIntent)
+                                finish()
+                                Runtime.getRuntime().exit(0)
+                            }, 900)
                         }
                     } else {
                         runOnUiThread {
